@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>16パズル</title>
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 8px;
+  }
+
+  .info {
+    margin: 8px 0;
+    font-size: 18px;
+  }
+
+  #puzzle {
+    width: 400px;
+    height: 400px;
+    margin: 20px auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 2px;
+    background: #333;
+    border: 4px solid #333;
+    touch-action: manipulation;
+  }
+
+  .piece {
+    width: 100%;
+    height: 100%;
+    background-size: 400px 400px;
+    border: none;
+    cursor: pointer;
+    font-size: 0;
+  }
+
+  .piece:active {
+    transform: scale(0.97);
+  }
+
+  .empty {
+    background: #222;
+    cursor: default;
+  }
+
+  button.control {
+    font-size: 16px;
+    padding: 10px 18px;
+    margin: 4px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 560px) {
+    #puzzle {
+      width: 90vw;
+      height: 90vw;
+    }
+
+    .piece {
+      background-size: 90vw 90vw;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>16パズル</h1>
+<p class="info">りんご画像を完成させよう（4×4）</p>
+<p class="info">手数：<span id="moves">0</span></p>
+<p class="info" id="message"></p>
+
+<button class="control" onclick="shufflePuzzle()">シャッフル</button>
+<button class="control" onclick="resetPuzzle()">リセット</button>
+
+<div id="puzzle"></div>
+
+<script>
+  const size = 4;
+  const totalPieces = size * size;
+  const emptyPieceNumber = 0; // 左上のピースを空白にする
+  const puzzle = document.getElementById("puzzle");
+  const movesText = document.getElementById("moves");
+  const messageText = document.getElementById("message");
+
+  // 画像ファイルを使う場合はここを変更する
+  // 例: const imageUrl = "apple.png";
+  let imageUrl = "";
+
+  // SVG生成後にimageUrlへ代入する
+  imageUrl = createAppleImage();
+
+  // boardには「各マスに入っているピース番号」を入れる
+  // 0が空白、1〜15が画像ピース
+  let board = [];
+  let moves = 0;
+
+  function resetPuzzle() {
+    board = Array.from({ length: totalPieces }, (_, i) => i);
+    moves = 0;
+    movesText.textContent = moves;
+    messageText.textContent = "";
+    renderPuzzle();
+  }
+
+  function renderPuzzle() {
+    puzzle.innerHTML = "";
+
+    board.forEach((pieceNumber, currentIndex) => {
+      const piece = document.createElement("button");
+      piece.className = "piece";
+      piece.onclick = () => movePiece(currentIndex);
+
+      if (pieceNumber === emptyPieceNumber) {
+        piece.classList.add("empty");
+      } else {
+        const originalRow = Math.floor(pieceNumber / size);
+        const originalCol = pieceNumber % size;
+
+        piece.style.backgroundImage = `url(${imageUrl})`;
+        const pieceSize = puzzle.clientWidth / size;
+        piece.style.backgroundSize = `${puzzle.clientWidth}px ${puzzle.clientWidth}px`;
+        piece.style.backgroundPosition = `${-originalCol * pieceSize}px ${-originalRow * pieceSize}px`;
+      }
+
+      puzzle.appendChild(piece);
+    });
+  }
+
+  function movePiece(index) {
+    const emptyIndex = board.indexOf(emptyPieceNumber);
+
+    if (!isAdjacent(index, emptyIndex)) return;
+
+    [board[index], board[emptyIndex]] = [board[emptyIndex], board[index]];
+    moves++;
+    movesText.textContent = moves;
+    renderPuzzle();
+
+    if (isSolved()) {
+      messageText.textContent = `クリア！ 手数：${moves}`;
+      setTimeout(() => {
+        alert(`完成！手数：${moves}`);
+      }, 100);
+    }
+  }
+
+  function isAdjacent(indexA, indexB) {
+    const rowA = Math.floor(indexA / size);
+    const colA = indexA % size;
+    const rowB = Math.floor(indexB / size);
+    const colB = indexB % size;
+
+    return Math.abs(rowA - rowB) + Math.abs(colA - colB) === 1;
+  }
+
+  function isSolved() {
+    // 完成形：左上が空白、その後ろに1〜15のピースが順番に並ぶ
+    const solvedBoard = Array.from({ length: totalPieces }, (_, i) => i);
+    return board.every((pieceNumber, index) => pieceNumber === solvedBoard[index]);
+  }
+
+  function shufflePuzzle() {
+    resetPuzzle();
+
+    // 解ける配置を保証するため、ランダムな合法手だけでシャッフルする
+    let lastEmptyIndex = -1;
+
+    for (let i = 0; i < 300; i++) {
+      const emptyIndex = board.indexOf(emptyPieceNumber);
+      const movableIndexes = getMovableIndexes(emptyIndex)
+        .filter(index => index !== lastEmptyIndex);
+
+      const randomIndex = movableIndexes[Math.floor(Math.random() * movableIndexes.length)];
+
+      [board[randomIndex], board[emptyIndex]] = [board[emptyIndex], board[randomIndex]];
+      lastEmptyIndex = emptyIndex;
+    }
+
+    moves = 0;
+    movesText.textContent = moves;
+    messageText.textContent = "";
+    renderPuzzle();
+  }
+
+  function getMovableIndexes(emptyIndex) {
+    const row = Math.floor(emptyIndex / size);
+    const col = emptyIndex % size;
+    const indexes = [];
+
+    if (row > 0) indexes.push(emptyIndex - size);
+    if (row < size - 1) indexes.push(emptyIndex + size);
+    if (col > 0) indexes.push(emptyIndex - 1);
+    if (col < size - 1) indexes.push(emptyIndex + 1);
+
+    return indexes;
+  }
+
+  function createAppleImage() {
+    // とりあえず用のりんご画像。
+    // プレビュー画面でも表示されやすいように、SVGをBase64のdata URLにして使う。
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+        <rect width="400" height="400" fill="rgb(255,246,232)"/>
+        <circle cx="170" cy="210" r="90" fill="rgb(229,57,53)"/>
+        <circle cx="230" cy="210" r="90" fill="rgb(211,47,47)"/>
+        <circle cx="200" cy="255" r="95" fill="rgb(198,40,40)"/>
+        <ellipse cx="165" cy="180" rx="28" ry="45" fill="rgb(255,138,128)" opacity="0.75"/>
+        <rect x="190" y="70" width="24" height="70" rx="14" fill="rgb(109,76,65)" transform="rotate(15 254 140)"/>
+        <ellipse cx="255" cy="105" rx="45" ry="24" fill="rgb(67,160,71)" transform="rotate(-25 315 135)"/>
+        <text x="200" y="360" text-anchor="middle" font-size="34" font-family="sans-serif" fill="rgb(93,64,55)">APPLE PUZZLE</text>
+      </svg>`;
+
+    return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+  }
+
+  resetPuzzle();
+</script>
+
+</body>
+</html>
