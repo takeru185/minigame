@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>じゃんけんゲーム</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #f5f5f5;
+    text-align: center;
+    color: #222;
+  }
+
+  .container {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    margin: 10px 0 16px;
+    font-size: 32px;
+  }
+
+  .status {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
+
+  .status span {
+    background: white;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 8px 12px;
+  }
+
+  .enemy-area {
+    background: white;
+    border: 4px solid #333;
+    border-radius: 20px;
+    padding: 24px;
+    margin: 18px 0;
+  }
+
+  .label {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  #enemyHand {
+    font-size: 100px;
+    line-height: 1;
+    min-height: 120px;
+  }
+
+  #resultText {
+    font-size: 28px;
+    font-weight: bold;
+    min-height: 42px;
+    margin: 18px 0 8px;
+  }
+
+  .player-area {
+    margin-top: 20px;
+  }
+
+  .hand-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .hand-button {
+    background: white;
+    border: 4px solid #333;
+    border-radius: 18px;
+    padding: 16px 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .hand-button:active {
+    transform: scale(0.96);
+  }
+
+  .hand-icon {
+    display: block;
+    font-size: 58px;
+    line-height: 1;
+  }
+
+  .hand-name {
+    display: block;
+    font-size: 20px;
+    margin-top: 8px;
+    font-weight: bold;
+  }
+
+  .control-button {
+    margin-top: 18px;
+    padding: 12px 22px;
+    font-size: 18px;
+    border: 3px solid #333;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+  }
+
+  .disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  @media (max-width: 420px) {
+    h1 {
+      font-size: 28px;
+    }
+
+    #enemyHand {
+      font-size: 84px;
+      min-height: 100px;
+    }
+
+    .hand-icon {
+      font-size: 48px;
+    }
+
+    .hand-name {
+      font-size: 18px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>じゃんけんゲーム</h1>
+
+  <div class="status">
+    <span>勝負：<strong id="roundCount">0</strong> / 5</span>
+    <span>勝ち：<strong id="winCount">0</strong></span>
+    <span>負け：<strong id="loseCount">0</strong></span>
+    <span>あいこ：<strong id="drawCount">0</strong></span>
+  </div>
+
+  <section class="enemy-area">
+    <div class="label">あいての手</div>
+    <div id="enemyHand">❔</div>
+  </section>
+
+  <div id="resultText">下のパネルから選んでね</div>
+
+  <section class="player-area">
+    <div class="label">じぶんの手</div>
+    <div class="hand-buttons" id="handButtons">
+      <button class="hand-button" onclick="play('rock')">
+        <span class="hand-icon">✊</span>
+        <span class="hand-name">グー</span>
+      </button>
+      <button class="hand-button" onclick="play('scissors')">
+        <span class="hand-icon">✌️</span>
+        <span class="hand-name">チョキ</span>
+      </button>
+      <button class="hand-button" onclick="play('paper')">
+        <span class="hand-icon">✋</span>
+        <span class="hand-name">パー</span>
+      </button>
+    </div>
+  </section>
+
+  <button class="control-button" onclick="resetGame()">もう一回</button>
+</div>
+
+<script>
+  const maxRounds = 5;
+
+  const hands = {
+    rock: {
+      name: "グー",
+      icon: "✊"
+    },
+    scissors: {
+      name: "チョキ",
+      icon: "✌️"
+    },
+    paper: {
+      name: "パー",
+      icon: "✋"
+    }
+  };
+
+  const enemyHandText = document.getElementById("enemyHand");
+  const resultText = document.getElementById("resultText");
+  const roundCountText = document.getElementById("roundCount");
+  const winCountText = document.getElementById("winCount");
+  const loseCountText = document.getElementById("loseCount");
+  const drawCountText = document.getElementById("drawCount");
+  const handButtons = document.getElementById("handButtons");
+
+  let roundCount = 0;
+  let winCount = 0;
+  let loseCount = 0;
+  let drawCount = 0;
+  let gameFinished = false;
+
+  function play(playerHand) {
+    if (gameFinished) return;
+
+    const enemyHand = getRandomHand();
+    const result = judge(playerHand, enemyHand);
+
+    enemyHandText.textContent = hands[enemyHand].icon;
+
+    roundCount++;
+
+    if (result === "win") {
+      winCount++;
+      resultText.textContent = `勝ち！ ${hands[playerHand].name} は ${hands[enemyHand].name} に勝つよ`;
+    } else if (result === "lose") {
+      loseCount++;
+      resultText.textContent = `負け！ ${hands[playerHand].name} は ${hands[enemyHand].name} に負けるよ`;
+    } else {
+      drawCount++;
+      resultText.textContent = `あいこ！ どちらも ${hands[playerHand].name}`;
+    }
+
+    updateScore();
+
+    if (roundCount >= maxRounds) {
+      finishGame();
+    }
+  }
+
+  function getRandomHand() {
+    const handKeys = Object.keys(hands);
+    const randomIndex = Math.floor(Math.random() * handKeys.length);
+    return handKeys[randomIndex];
+  }
+
+  function judge(playerHand, enemyHand) {
+    if (playerHand === enemyHand) return "draw";
+
+    if (
+      (playerHand === "rock" && enemyHand === "scissors") ||
+      (playerHand === "scissors" && enemyHand === "paper") ||
+      (playerHand === "paper" && enemyHand === "rock")
+    ) {
+      return "win";
+    }
+
+    return "lose";
+  }
+
+  function updateScore() {
+    roundCountText.textContent = roundCount;
+    winCountText.textContent = winCount;
+    loseCountText.textContent = loseCount;
+    drawCountText.textContent = drawCount;
+  }
+
+  function finishGame() {
+    gameFinished = true;
+    handButtons.classList.add("disabled");
+
+    let finalMessage = "";
+
+    if (winCount > loseCount) {
+      finalMessage = "5回勝負終了！あなたの勝ち！";
+    } else if (winCount < loseCount) {
+      finalMessage = "5回勝負終了！あなたの負け！";
+    } else {
+      finalMessage = "5回勝負終了！引き分け！";
+    }
+
+    resultText.textContent = `${finalMessage} ${winCount}勝${loseCount}敗${drawCount}分け`;
+  }
+
+  function resetGame() {
+    roundCount = 0;
+    winCount = 0;
+    loseCount = 0;
+    drawCount = 0;
+    gameFinished = false;
+
+    enemyHandText.textContent = "❔";
+    resultText.textContent = "下のパネルから選んでね";
+    handButtons.classList.remove("disabled");
+    updateScore();
+  }
+</script>
+
+</body>
+</html>
