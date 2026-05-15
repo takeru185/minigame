@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ジグソーパズル</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: sans-serif;
+    text-align: center;
+    background: #f5f5f5;
+    color: #222;
+  }
+
+  h1 {
+    margin: 8px 0 10px;
+  }
+
+  .info {
+    margin: 6px 0;
+    font-size: 16px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin: 12px auto;
+  }
+
+  input,
+  select,
+  button {
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  #message {
+    min-height: 26px;
+    font-weight: bold;
+    color: #c62828;
+  }
+
+  #previewArea {
+    margin: 10px auto 14px;
+  }
+
+  #previewArea.hidden-preview #previewImage {
+    display: none;
+  }
+
+  #previewArea.hidden-preview::after {
+    content: "完成見本は非表示です";
+    display: inline-block;
+    padding: 18px 24px;
+    border: 3px dashed #333;
+    border-radius: 12px;
+    background: white;
+    font-weight: bold;
+    color: #555;
+  }
+
+  #previewImage {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border: 3px solid #333;
+    border-radius: 12px;
+    background: white;
+  }
+
+  #gameArea {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  #boardWrap {
+    position: relative;
+    width: min(92vw, 560px);
+    height: min(92vw, 560px);
+    margin: 0 auto;
+    background: white;
+    border: 4px solid #333;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .slot {
+    position: absolute;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .slot svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .slot:hover path {
+    fill: rgba(255, 193, 7, 0.22);
+  }
+
+  #tray {
+    width: min(94vw, 900px);
+    min-height: 230px;
+    margin: 0 auto;
+    padding: 12px;
+    border: 4px solid #333;
+    border-radius: 14px;
+    background: #e0e0e0;
+    position: relative;
+    overflow: auto;
+  }
+
+  .piece {
+    position: absolute;
+    touch-action: manipulation;
+    cursor: pointer;
+    filter: drop-shadow(2px 3px 3px rgba(0, 0, 0, 0.28));
+    user-select: none;
+  }
+
+  .piece:active {
+    transform: scale(0.98);
+  }
+
+  .piece.selected {
+    outline: 5px solid #ff9800;
+    border-radius: 8px;
+    z-index: 20;
+  }
+
+  .piece.locked {
+    cursor: default;
+    filter: none;
+  }
+
+  .piece svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  @media (min-width: 980px) {
+    #gameArea {
+      grid-template-columns: 580px 1fr;
+      align-items: start;
+    }
+
+    #tray {
+      min-height: 560px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<h1>ジグソーパズル</h1>
+<p class="info">外側のピースを選んで、正しい場所をクリックしてください</p>
+<p class="info">手数：<span id="moves">0</span>　完成：<span id="placedCount">0</span>/<span id="totalCount">16</span></p>
+<p class="info" id="message"></p>
+
+<div class="controls">
+  <input type="file" id="imageInput" accept="image/*">
+
+  <label>
+    ピース数：
+    <select id="pieceCountSelect">
+      <option value="9">9ピース</option>
+      <option value="16" selected>16ピース</option>
+      <option value="25">25ピース</option>
+      <option value="49">49ピース</option>
+    </select>
+  </label>
+
+  <button onclick="startGame()">作り直す</button>
+  <button onclick="togglePreview()" id="previewToggleButton">完成見本を隠す</button>
+</div>
+
+<div id="previewArea">
+  <div class="info">完成見本</div>
+  <img id="previewImage" alt="完成見本">
+</div>
+
+<div id="gameArea">
+  <div id="boardWrap">
+    <div id="slots"></div>
+  </div>
+
+  <div id="tray"></div>
+</div>
+
+<script>
+  const imageInput = document.getElementById("imageInput");
+  const pieceCountSelect = document.getElementById("pieceCountSelect");
+  const previewImage = document.getElementById("previewImage");
+  const boardWrap = document.getElementById("boardWrap");
+  const slots = document.getElementById("slots");
+  const tray = document.getElementById("tray");
+  const movesText = document.getElementById("moves");
+  const messageText = document.getElementById("message");
+  const placedCountText = document.getElementById("placedCount");
+  const totalCountText = document.getElementById("totalCount");
+  const previewArea = document.getElementById("previewArea");
+  const previewToggleButton = document.getElementById("previewToggleButton");
+
+  let imageUrl = createAppleImage();
+  let rows = 4;
+  let cols = 4;
+  let totalPieces = 16;
+  let boardSize = 560;
+  let pieceW = 140;
+  let pieceH = 140;
+  let tabSize = 28;
+  let moves = 0;
+  let placedCount = 0;
+  let pieces = [];
+  let edgeMap = [];
+  let selectedPiece = null;
+  let previewVisible = true;
+
+  previewImage.src = imageUrl;
+  imageInput.addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      imageUrl = e.target.result;
+      previewImage.src = imageUrl;
+      startGame();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  pieceCountSelect.addEventListener("change", startGame);
+  window.addEventListener("resize", startGame);
+
+  function getGridSize(pieceCount) {
+    if (pieceCount === 9) return { rows: 3, cols: 3 };
+    if (pieceCount === 16) return { rows: 4, cols: 4 };
+    if (pieceCount === 25) return { rows: 5, cols: 5 };
+    return { rows: 7, cols: 7 }; // 49ピース
+  }
+
+  function startGame() {
+    const grid = getGridSize(Number(pieceCountSelect.value));
+    rows = grid.rows;
+    cols = grid.cols;
+    totalPieces = rows * cols;
+
+    boardSize = boardWrap.clientWidth;
+    pieceW = boardSize / cols;
+    pieceH = boardSize / rows;
+    tabSize = Math.min(pieceW, pieceH) * 0.23;
+
+    moves = 0;
+    placedCount = 0;
+    pieces = [];
+    selectedPiece = null;
+
+    movesText.textContent = moves;
+    placedCountText.textContent = placedCount;
+    totalCountText.textContent = totalPieces;
+    messageText.textContent = "";
+
+    slots.innerHTML = "";
+    tray.innerHTML = "";
+
+    createEdgeMap();
+    createSlots();
+    createPieces();
+  }
+
+  function createEdgeMap() {
+    edgeMap = [];
+
+    for (let r = 0; r < rows; r++) {
+      edgeMap[r] = [];
+      for (let c = 0; c < cols; c++) {
+        edgeMap[r][c] = { top: 0, right: 0, bottom: 0, left: 0 };
+      }
+    }
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (c < cols - 1) {
+          const v = Math.random() < 0.5 ? 1 : -1;
+          edgeMap[r][c].right = v;
+          edgeMap[r][c + 1].left = -v;
+        }
+        if (r < rows - 1) {
+          const v = Math.random() < 0.5 ? 1 : -1;
+          edgeMap[r][c].bottom = v;
+          edgeMap[r + 1][c].top = -v;
+        }
+      }
+    }
+  }
+
+  function createSlots() {
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.style.left = `${c * pieceW - tabSize}px`;
+        slot.style.top = `${r * pieceH - tabSize}px`;
+        slot.style.width = `${pieceW + tabSize * 2}px`;
+        slot.style.height = `${pieceH + tabSize * 2}px`;
+        slot.dataset.row = r;
+        slot.dataset.col = c;
+        slot.dataset.index = r * cols + c;
+
+        const path = createJigsawPath(edgeMap[r][c]);
+        slot.innerHTML = `
+          <svg viewBox="0 0 ${pieceW + tabSize * 2} ${pieceH + tabSize * 2}">
+            <path d="${path}" fill="rgba(255,255,255,0.42)" stroke="rgba(0,0,0,0.5)" stroke-width="2"></path>
+          </svg>
+        `;
+
+        slot.addEventListener("click", onSlotClick);
+        slots.appendChild(slot);
+      }
+    }
+  }
+
+  function createPieces() {
+    const indexes = Array.from({ length: totalPieces }, (_, i) => i);
+    shuffleArray(indexes);
+
+    indexes.forEach(function(index, trayIndex) {
+      const r = Math.floor(index / cols);
+      const c = index % cols;
+      const piece = makePiece(index, r, c);
+
+      const trayRect = tray.getBoundingClientRect();
+      const displayScale = 0.8;
+      const pieceBoxW = (pieceW + tabSize * 2) * displayScale;
+      const pieceBoxH = (pieceH + tabSize * 2) * displayScale;
+      const gap = 12;
+      const usableWidth = Math.max(pieceBoxW, trayRect.width - 24);
+      const perRow = Math.max(1, Math.floor((usableWidth + gap) / (pieceBoxW + gap)));
+      const x = 12 + (trayIndex % perRow) * (pieceBoxW + gap);
+      const y = 12 + Math.floor(trayIndex / perRow) * (pieceBoxH + gap);
+
+      piece.style.left = `${x}px`;
+      piece.style.top = `${y}px`;
+
+      tray.appendChild(piece);
+      pieces.push(piece);
+    });
+
+    const displayScale = 0.8;
+    const pieceBoxW = (pieceW + tabSize * 2) * displayScale;
+    const pieceBoxH = (pieceH + tabSize * 2) * displayScale;
+    const gap = 12;
+    const trayRect = tray.getBoundingClientRect();
+    const usableWidth = Math.max(pieceBoxW, trayRect.width - 24);
+    const perRow = Math.max(1, Math.floor((usableWidth + gap) / (pieceBoxW + gap)));
+    const rowsNeeded = Math.ceil(totalPieces / perRow);
+    tray.style.minHeight = `${Math.max(230, rowsNeeded * (pieceBoxH + gap) + 24)}px`;
+  }
+
+  function makePiece(index, row, col) {
+    const piece = document.createElement("div");
+    piece.className = "piece";
+    piece.dataset.index = index;
+    piece.dataset.row = row;
+    piece.dataset.col = col;
+    piece.dataset.locked = "false";
+
+    const displayScale = 0.8;
+    piece.style.width = `${(pieceW + tabSize * 2) * displayScale}px`;
+    piece.style.height = `${(pieceH + tabSize * 2) * displayScale}px`;
+
+    const path = createJigsawPath(edgeMap[row][col]);
+    const clipId = `clip-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`;
+
+    const imageX = tabSize - col * pieceW;
+    const imageY = tabSize - row * pieceH;
+
+    piece.innerHTML = `
+      <svg viewBox="0 0 ${pieceW + tabSize * 2} ${pieceH + tabSize * 2}">
+        <defs>
+          <clipPath id="${clipId}">
+            <path d="${path}"></path>
+          </clipPath>
+        </defs>
+        <image href="${imageUrl}" x="${imageX}" y="${imageY}" width="${boardSize}" height="${boardSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"></image>
+        <path d="${path}" fill="none" stroke="rgba(0,0,0,0.55)" stroke-width="2"></path>
+      </svg>
+    `;
+
+    piece.addEventListener("click", function() {
+      selectPiece(piece);
+    });
+    return piece;
+  }
+
+  function createJigsawPath(edge) {
+    const x0 = tabSize;
+    const y0 = tabSize;
+    const x1 = tabSize + pieceW;
+    const y1 = tabSize + pieceH;
+    const tw = tabSize;
+    const cx = pieceW * 0.5;
+    const cy = pieceH * 0.5;
+
+    let d = `M ${x0} ${y0}`;
+
+    // 上辺
+    if (edge.top === 0) {
+      d += ` L ${x1} ${y0}`;
+    } else {
+      const dir = -edge.top;
+      d += ` L ${x0 + pieceW * 0.35} ${y0}`;
+      d += ` C ${x0 + pieceW * 0.38} ${y0 + dir * tw}, ${x0 + pieceW * 0.62} ${y0 + dir * tw}, ${x0 + pieceW * 0.65} ${y0}`;
+      d += ` L ${x1} ${y0}`;
+    }
+
+    // 右辺
+    if (edge.right === 0) {
+      d += ` L ${x1} ${y1}`;
+    } else {
+      const dir = edge.right;
+      d += ` L ${x1} ${y0 + pieceH * 0.35}`;
+      d += ` C ${x1 + dir * tw} ${y0 + pieceH * 0.38}, ${x1 + dir * tw} ${y0 + pieceH * 0.62}, ${x1} ${y0 + pieceH * 0.65}`;
+      d += ` L ${x1} ${y1}`;
+    }
+
+    // 下辺
+    if (edge.bottom === 0) {
+      d += ` L ${x0} ${y1}`;
+    } else {
+      const dir = edge.bottom;
+      d += ` L ${x0 + pieceW * 0.65} ${y1}`;
+      d += ` C ${x0 + pieceW * 0.62} ${y1 + dir * tw}, ${x0 + pieceW * 0.38} ${y1 + dir * tw}, ${x0 + pieceW * 0.35} ${y1}`;
+      d += ` L ${x0} ${y1}`;
+    }
+
+    // 左辺
+    if (edge.left === 0) {
+      d += ` L ${x0} ${y0}`;
+    } else {
+      const dir = -edge.left;
+      d += ` L ${x0} ${y0 + pieceH * 0.65}`;
+      d += ` C ${x0 + dir * tw} ${y0 + pieceH * 0.62}, ${x0 + dir * tw} ${y0 + pieceH * 0.38}, ${x0} ${y0 + pieceH * 0.35}`;
+      d += ` L ${x0} ${y0}`;
+    }
+
+    d += " Z";
+    return d;
+  }
+
+  function selectPiece(piece) {
+    if (piece.dataset.locked === "true") return;
+
+    if (selectedPiece) {
+      selectedPiece.classList.remove("selected");
+    }
+
+    selectedPiece = piece;
+    selectedPiece.classList.add("selected");
+    messageText.textContent = "置きたい場所をクリックしてください";
+  }
+
+  function onSlotClick(event) {
+    if (!selectedPiece) {
+      messageText.textContent = "先にピースを選んでください";
+      return;
+    }
+
+    const slotIndex = Number(event.currentTarget.dataset.index);
+    const pieceIndex = Number(selectedPiece.dataset.index);
+
+    if (slotIndex !== pieceIndex) {
+      messageText.textContent = "そこには置けません。別の場所を選んでください";
+      return;
+    }
+
+    placePiece(selectedPiece);
+  }
+
+  function placePiece(piece) {
+
+    const row = Number(piece.dataset.row);
+    const col = Number(piece.dataset.col);
+
+    moves++;
+    movesText.textContent = moves;
+
+    piece.classList.remove("selected");
+    boardWrap.appendChild(piece);
+
+    piece.style.width = `${pieceW + tabSize * 2}px`;
+    piece.style.height = `${pieceH + tabSize * 2}px`;
+    piece.style.left = `${col * pieceW - tabSize}px`;
+    piece.style.top = `${row * pieceH - tabSize}px`;
+    piece.style.zIndex = 10 + row * cols + col;
+    piece.classList.add("locked");
+    piece.dataset.locked = "true";
+
+    selectedPiece = null;
+    placedCount++;
+    placedCountText.textContent = placedCount;
+    messageText.textContent = "";
+
+    if (placedCount === totalPieces) {
+      messageText.textContent = `クリア！ 手数：${moves}`;
+      showPreview();
+    }
+  }
+
+  function togglePreview() {
+    if (previewVisible) {
+      hidePreview();
+    } else {
+      showPreview();
+    }
+  }
+
+  function hidePreview() {
+    previewVisible = false;
+    previewArea.classList.add("hidden-preview");
+    previewToggleButton.textContent = "完成見本を表示";
+  }
+
+  function showPreview() {
+    previewVisible = true;
+    previewArea.classList.remove("hidden-preview");
+    previewToggleButton.textContent = "完成見本を隠す";
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  function createAppleImage() {
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+        <rect width="600" height="600" fill="rgb(255,246,232)"/>
+        <circle cx="255" cy="310" r="135" fill="rgb(229,57,53)"/>
+        <circle cx="345" cy="310" r="135" fill="rgb(211,47,47)"/>
+        <circle cx="300" cy="380" r="145" fill="rgb(198,40,40)"/>
+        <ellipse cx="245" cy="270" rx="42" ry="65" fill="rgb(255,138,128)" opacity="0.75"/>
+        <rect x="288" y="110" width="32" height="105" rx="16" fill="rgb(109,76,65)" transform="rotate(15 304 162)"/>
+        <ellipse cx="375" cy="160" rx="68" ry="34" fill="rgb(67,160,71)" transform="rotate(-25 375 160)"/>
+        <text x="300" y="535" text-anchor="middle" font-size="40" font-family="sans-serif" fill="rgb(93,64,55)">APPLE JIGSAW</text>
+      </svg>`;
+
+    return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+  }
+
+  startGame();
+</script>
+
+</body>
+</html>
