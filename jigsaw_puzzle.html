@@ -161,6 +161,68 @@
     overflow: visible;
   }
 
+  #clearOverlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 9999;
+    pointer-events: none;
+  }
+
+  #clearOverlay.show {
+    display: flex;
+  }
+
+  .clear-card {
+    background: white;
+    border: 5px solid #333;
+    border-radius: 24px;
+    padding: 28px 36px;
+    font-size: 42px;
+    font-weight: bold;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    animation: clearPop 0.55s ease-out;
+  }
+
+  .confetti {
+    position: fixed;
+    top: -20px;
+    width: 12px;
+    height: 18px;
+    z-index: 10000;
+    pointer-events: none;
+    animation: confettiFall 1.8s linear forwards;
+  }
+
+  @keyframes clearPop {
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.08);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes confettiFall {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
   @media (orientation: landscape) and (min-width: 900px) {
     body {
       overflow-x: hidden;
@@ -199,7 +261,6 @@
 
 <h1>ジグソーパズル</h1>
 <p class="info">外側のピースを選んで、正しい場所をクリックしてください</p>
-<p class="info">手数：<span id="moves">0</span>　完成：<span id="placedCount">0</span>/<span id="totalCount">16</span></p>
 <p class="info" id="message"></p>
 
 <div class="controls">
@@ -224,6 +285,10 @@
   <img id="previewImage" alt="完成見本">
 </div>
 
+<div id="clearOverlay">
+  <div class="clear-card">🎉 クリア！ 🎉</div>
+</div>
+
 <div id="gameArea">
   <div id="boardWrap">
     <div id="slots"></div>
@@ -239,12 +304,10 @@
   const boardWrap = document.getElementById("boardWrap");
   const slots = document.getElementById("slots");
   const tray = document.getElementById("tray");
-  const movesText = document.getElementById("moves");
   const messageText = document.getElementById("message");
-  const placedCountText = document.getElementById("placedCount");
-  const totalCountText = document.getElementById("totalCount");
   const previewArea = document.getElementById("previewArea");
   const previewToggleButton = document.getElementById("previewToggleButton");
+  const clearOverlay = document.getElementById("clearOverlay");
 
   let imageUrl = createAppleImage();
   let rows = 4;
@@ -326,11 +389,11 @@
     pieces = [];
     selectedPiece = null;
 
-    movesText.textContent = moves;
-    placedCountText.textContent = placedCount;
-    totalCountText.textContent = totalPieces;
     messageText.textContent = "";
 
+    boardWrap.querySelectorAll(".piece").forEach(function(piece) {
+      piece.remove();
+    });
     slots.innerHTML = "";
     tray.innerHTML = "";
 
@@ -580,8 +643,6 @@
     const col = Number(piece.dataset.col);
 
     moves++;
-    movesText.textContent = moves;
-
     piece.classList.remove("selected");
     boardWrap.appendChild(piece);
 
@@ -596,12 +657,41 @@
     selectedPiece = null;
     placedCount++;
     compactTrayPieces();
-    placedCountText.textContent = placedCount;
     messageText.textContent = "";
 
     if (placedCount === totalPieces) {
-      messageText.textContent = `クリア！ 手数：${moves}`;
+      messageText.textContent = "クリア！";
       showPreview();
+      showClearEffect();
+    }
+  }
+
+  function showClearEffect() {
+    clearOverlay.classList.add("show");
+    createConfetti();
+
+    setTimeout(function() {
+      clearOverlay.classList.remove("show");
+    }, 2200);
+  }
+
+  function createConfetti() {
+    const colors = ["#f44336", "#ff9800", "#ffeb3b", "#4caf50", "#2196f3", "#9c27b0"];
+    const count = 80;
+
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti";
+      piece.style.left = `${Math.random() * 100}vw`;
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = `${Math.random() * 0.6}s`;
+      piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+      piece.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+      document.body.appendChild(piece);
+
+      setTimeout(function() {
+        piece.remove();
+      }, 2600);
     }
   }
 
