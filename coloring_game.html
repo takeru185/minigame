@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>線画アップロード塗り絵</title>
+  <style>
+    :root {
+      --bg: #f5f5f8;
+      --panel: #ffffff;
+      --text: #222;
+      --muted: #666;
+      --accent: #4f46e5;
+      --border: #ddddE8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 18px;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 18px;
+    }
+
+    .panel, .stage {
+      background: var(--panel);
+      border-radius: 20px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.08);
+    }
+
+    .panel {
+      padding: 18px;
+      align-self: start;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .note {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .section-title {
+      margin: 18px 0 10px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .colors {
+      display: grid;
+      grid-template-columns: repeat(5, 42px);
+      gap: 10px;
+    }
+
+    .color {
+      width: 42px;
+      height: 42px;
+      border: 3px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
+    }
+
+    .color.active {
+      border-color: #111;
+      transform: scale(1.05);
+    }
+
+    .custom-color-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    input[type="color"] {
+      width: 54px;
+      height: 40px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .tools {
+      display: grid;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #ececf8;
+      color: #25233a;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .settings {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 14px;
+      color: var(--muted);
+      display: grid;
+      gap: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .stage {
+      min-height: 680px;
+      padding: 18px;
+      display: grid;
+      place-items: center;
+      overflow: auto;
+    }
+
+    .canvas-shell {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      border: 2px dashed var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      background:
+        linear-gradient(45deg, #fafafa 25%, transparent 25%),
+        linear-gradient(-45deg, #fafafa 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #fafafa 75%),
+        linear-gradient(-45deg, transparent 75%, #fafafa 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: 78vh;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.12);
+      cursor: crosshair;
+      image-rendering: auto;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.8;
+      padding: 30px;
+    }
+
+    .status {
+      min-height: 44px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #f6f6ff;
+      color: #37306b;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+      .colors { grid-template-columns: repeat(8, 42px); }
+      .stage { min-height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="panel">
+      <h1>線画アップロード塗り絵</h1>
+      <p class="note">
+        白黒の線画画像を選んでください。クリックした白い領域を、選択中の色でバケツ塗りします。
+      </p>
+
+      <div class="section-title">画像</div>
+      <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" />
+
+      <div class="section-title">色</div>
+      <div class="colors" id="colors"></div>
+      <div class="custom-color-row">
+        <span>自由色</span>
+        <input id="customColor" type="color" value="#ff595e" />
+      </div>
+
+      <div class="section-title">設定</div>
+      <div class="settings">
+        <label>
+          線の判定: <span id="thresholdLabel">80</span>
+          <input id="threshold" type="range" min="20" max="180" value="80" />
+        </label>
+        <label>
+          白領域のゆるさ: <span id="toleranceLabel">35</span>
+          <input id="tolerance" type="range" min="5" max="90" value="35" />
+        </label>
+      </div>
+
+      <div class="section-title">ツール</div>
+      <div class="tools">
+        <button class="primary" id="saveBtn" disabled>PNG保存</button>
+        <button id="undoBtn" disabled>一つ戻す</button>
+        <button id="resetBtn" disabled>リセット</button>
+      </div>
+
+      <div class="section-title">状態</div>
+      <div class="status" id="status">
+        まだ画像が読み込まれていません。
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="canvas-shell" id="canvasShell">
+        <div class="empty" id="empty">
+          ここに線画が表示されます。<br>
+          PNG / JPG / WebP に対応。
+        </div>
+        <canvas id="canvas" hidden></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const empty = document.getElementById("empty");
+    const colorsEl = document.getElementById("colors");
+    const customColor = document.getElementById("customColor");
+    const threshold = document.getElementById("threshold");
+    const tolerance = document.getElementById("tolerance");
+    const thresholdLabel = document.getElementById("thresholdLabel");
+    const toleranceLabel = document.getElementById("toleranceLabel");
+    const statusEl = document.getElementById("status");
+    const undoBtn = document.getElementById("undoBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const saveBtn = document.getElementById("saveBtn");
+
+    const palette = [
+      "#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93",
+      "#f72585", "#4cc9f0", "#b7e4c7", "#f4a261", "#a7c957"
+    ];
+
+    let selectedColor = palette[0];
+    let originalImageData = null;
+    let history = [];
+    const maxHistory = 20;
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+
+    function renderPalette() {
+      colorsEl.innerHTML = "";
+      palette.forEach((color, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "color" + (index === 0 ? " active" : "");
+        btn.style.background = color;
+        btn.ariaLabel = color + "を選択";
+        btn.addEventListener("click", () => {
+          selectedColor = color;
+          customColor.value = color;
+          [...document.querySelectorAll(".color")].forEach(el => el.classList.remove("active"));
+          btn.classList.add("active");
+        });
+        colorsEl.appendChild(btn);
+      });
+    }
+
+    customColor.addEventListener("input", () => {
+      selectedColor = customColor.value;
+      [...document.querySelectorAll(".color")].forEach(el => el.classList.remove("active"));
+    });
+
+    threshold.addEventListener("input", () => {
+      thresholdLabel.textContent = threshold.value;
+    });
+
+    tolerance.addEventListener("input", () => {
+      toleranceLabel.textContent = tolerance.value;
+    });
+
+    function pushHistory() {
+      if (!canvas.width || !canvas.height) return;
+      history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+      if (history.length > maxHistory) history.shift();
+      undoBtn.disabled = history.length === 0;
+    }
+
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const maxSide = 1600;
+          let w = img.width;
+          let h = img.height;
+
+          if (Math.max(w, h) > maxSide) {
+            const scale = maxSide / Math.max(w, h);
+            w = Math.round(w * scale);
+            h = Math.round(h * scale);
+          }
+
+          canvas.width = w;
+          canvas.height = h;
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+
+          originalImageData = ctx.getImageData(0, 0, w, h);
+          history = [];
+
+          empty.hidden = true;
+          canvas.hidden = false;
+          undoBtn.disabled = true;
+          resetBtn.disabled = false;
+          saveBtn.disabled = false;
+
+          setStatus("画像を読み込みました。白い領域をクリックすると塗れます。線が薄い場合は「線の判定」を上げてください。");
+        };
+        img.onerror = () => setStatus("画像を読み込めませんでした。別のPNG/JPG/WebPで試してください。");
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      loadImage(file);
+    });
+
+    function isLinePixel(data, idx) {
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+      const a = data[idx + 3];
+      if (a < 20) return false;
+      const brightness = (r + g + b) / 3;
+      return brightness < Number(threshold.value);
+    }
+
+    function colorDistance(data, idx, target) {
+      const dr = data[idx] - target.r;
+      const dg = data[idx + 1] - target.g;
+      const db = data[idx + 2] - target.b;
+      return Math.sqrt(dr * dr + dg * dg + db * db);
+    }
+
+    function floodFill(startX, startY) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const image = ctx.getImageData(0, 0, w, h);
+      const data = image.data;
+      const startIdx = (startY * w + startX) * 4;
+
+      if (isLinePixel(data, startIdx)) {
+        setStatus("線の上は塗れません。白い領域をクリックしてください。");
+        return;
+      }
+
+      const target = {
+        r: data[startIdx],
+        g: data[startIdx + 1],
+        b: data[startIdx + 2]
+      };
+
+      const fill = hexToRgb(selectedColor);
+      const tol = Number(tolerance.value);
+
+      if (
+        Math.abs(target.r - fill.r) < 3 &&
+        Math.abs(target.g - fill.g) < 3 &&
+        Math.abs(target.b - fill.b) < 3
+      ) {
+        return;
+      }
+
+      pushHistory();
+
+      const stack = [[startX, startY]];
+      const visited = new Uint8Array(w * h);
+      let filled = 0;
+      const limit = w * h;
+
+      while (stack.length) {
+        const [x, y] = stack.pop();
+        if (x < 0 || y < 0 || x >= w || y >= h) continue;
+
+        const pos = y * w + x;
+        if (visited[pos]) continue;
+        visited[pos] = 1;
+
+        const idx = pos * 4;
+        if (isLinePixel(data, idx)) continue;
+        if (colorDistance(data, idx, target) > tol) continue;
+
+        data[idx] = fill.r;
+        data[idx + 1] = fill.g;
+        data[idx + 2] = fill.b;
+        data[idx + 3] = 255;
+        filled++;
+
+        stack.push([x + 1, y]);
+        stack.push([x - 1, y]);
+        stack.push([x, y + 1]);
+        stack.push([x, y - 1]);
+
+        if (filled > limit) break;
+      }
+
+      ctx.putImageData(image, 0, 0);
+      undoBtn.disabled = history.length === 0;
+
+      if (filled === 0) {
+        history.pop();
+        undoBtn.disabled = history.length === 0;
+        setStatus("塗れる領域が見つかりませんでした。白領域のゆるさを少し上げてください。");
+      } else {
+        setStatus(filled.toLocaleString() + "ピクセルを塗りました。");
+      }
+    }
+
+    canvas.addEventListener("click", (event) => {
+      if (!originalImageData) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = Math.floor((event.clientX - rect.left) * scaleX);
+      const y = Math.floor((event.clientY - rect.top) * scaleY);
+
+      floodFill(x, y);
+    });
+
+    undoBtn.addEventListener("click", () => {
+      const previous = history.pop();
+      if (!previous) return;
+      ctx.putImageData(previous, 0, 0);
+      undoBtn.disabled = history.length === 0;
+      setStatus("一つ戻しました。");
+    });
+
+    resetBtn.addEventListener("click", () => {
+      if (!originalImageData) return;
+      pushHistory();
+      ctx.putImageData(originalImageData, 0, 0);
+      setStatus("読み込み直後の状態に戻しました。");
+    });
+
+    saveBtn.addEventListener("click", () => {
+      if (!canvas.width || !canvas.height) return;
+      const link = document.createElement("a");
+      link.download = "nurie_result.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      setStatus("PNGとして保存しました。");
+    });
+
+    renderPalette();
+  </script>
+</body>
+</html>
