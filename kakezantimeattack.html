@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>九九 大きさ比較 タイムアタック</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 30px;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+  }
+
+  .timer {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 20px 0;
+  }
+
+  .question {
+    font-size: 22px;
+    margin: 25px 0;
+  }
+
+  .cards {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 30px 0;
+  }
+
+  .card {
+    width: 180px;
+    height: 140px;
+    border: 2px solid #999;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    cursor: pointer;
+    background: white;
+    transition: 0.2s;
+  }
+
+  .card:hover {
+    transform: scale(1.05);
+    background: #f5f5f5;
+  }
+
+  .formula {
+    font-size: 30px;
+    font-weight: bold;
+  }
+
+  .answer {
+    font-size: 20px;
+    margin-top: 10px;
+    color: #555;
+    display: none;
+  }
+
+  .result {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px 0;
+    height: 32px;
+  }
+
+  .correct {
+    background: gold;
+    border-color: orange;
+  }
+
+  .wrong {
+    background: #ffd6d6;
+    border-color: red;
+  }
+
+  button {
+    font-size: 18px;
+    padding: 10px 18px;
+    margin: 8px;
+    cursor: pointer;
+  }
+
+  .score {
+    margin-top: 20px;
+    font-size: 18px;
+  }
+
+  .finished {
+    font-size: 26px;
+    font-weight: bold;
+    color: #d35400;
+    margin-top: 20px;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>九九 大きさ比較 タイムアタック</h1>
+
+<div class="timer">
+  残り時間：<span id="timeLeft">30</span>秒
+</div>
+
+<p class="question">どちらの答えが大きい？</p>
+
+<div class="cards">
+  <div class="card" id="leftCard" onclick="checkAnswer('left')">
+    <div class="formula" id="leftFormula"></div>
+    <div class="answer" id="leftAnswer"></div>
+  </div>
+
+  <div class="card" id="rightCard" onclick="checkAnswer('right')">
+    <div class="formula" id="rightFormula"></div>
+    <div class="answer" id="rightAnswer"></div>
+  </div>
+</div>
+
+<div class="result" id="result"></div>
+
+<button onclick="startTimeAttack()">スタート</button>
+<button onclick="newQuestion()">次の問題</button>
+<button onclick="resetGame()">リセット</button>
+
+<div class="score">
+  正解：<span id="correctCount">0</span>　
+  問題数：<span id="totalCount">0</span>
+</div>
+
+<div class="finished" id="finishedMessage"></div>
+
+<script>
+  let leftValue;
+  let rightValue;
+  let answered = false;
+
+  let correctCount = 0;
+  let totalCount = 0;
+
+  let timeLeft = 30;
+  let timerId = null;
+  let gameRunning = false;
+
+  const leftCard = document.getElementById("leftCard");
+  const rightCard = document.getElementById("rightCard");
+  const leftFormula = document.getElementById("leftFormula");
+  const rightFormula = document.getElementById("rightFormula");
+  const leftAnswer = document.getElementById("leftAnswer");
+  const rightAnswer = document.getElementById("rightAnswer");
+  const result = document.getElementById("result");
+  const correctCountSpan = document.getElementById("correctCount");
+  const totalCountSpan = document.getElementById("totalCount");
+  const timeLeftSpan = document.getElementById("timeLeft");
+  const finishedMessage = document.getElementById("finishedMessage");
+
+  function randomDan() {
+    return Math.floor(Math.random() * 9) + 1;
+  }
+
+  function makeKuku() {
+    const a = randomDan();
+    const b = randomDan();
+
+    return {
+      text: a + " × " + b,
+      value: a * b
+    };
+  }
+
+  function newQuestion() {
+    if (!gameRunning) return;
+
+    answered = false;
+
+    leftCard.className = "card";
+    rightCard.className = "card";
+    result.textContent = "";
+
+    leftAnswer.style.display = "none";
+    rightAnswer.style.display = "none";
+
+    let left = makeKuku();
+    let right = makeKuku();
+
+    while (left.value === right.value) {
+      right = makeKuku();
+    }
+
+    leftValue = left.value;
+    rightValue = right.value;
+
+    leftFormula.textContent = left.text;
+    rightFormula.textContent = right.text;
+
+    leftAnswer.textContent = "= " + left.value;
+    rightAnswer.textContent = "= " + right.value;
+  }
+
+  function checkAnswer(choice) {
+    if (!gameRunning || answered) return;
+
+    answered = true;
+    totalCount++;
+
+    leftAnswer.style.display = "block";
+    rightAnswer.style.display = "block";
+
+    const correctChoice = leftValue > rightValue ? "left" : "right";
+
+    if (choice === correctChoice) {
+      correctCount++;
+      result.textContent = "正解！";
+    } else {
+      result.textContent = "不正解";
+    }
+
+    if (correctChoice === "left") {
+      leftCard.classList.add("correct");
+      rightCard.classList.add("wrong");
+    } else {
+      rightCard.classList.add("correct");
+      leftCard.classList.add("wrong");
+    }
+
+    correctCountSpan.textContent = correctCount;
+    totalCountSpan.textContent = totalCount;
+
+    setTimeout(() => {
+      if (gameRunning) {
+        newQuestion();
+      }
+    }, 500);
+  }
+
+  function startTimeAttack() {
+    resetGame();
+
+    gameRunning = true;
+    finishedMessage.textContent = "";
+    newQuestion();
+
+    timerId = setInterval(() => {
+      timeLeft--;
+      timeLeftSpan.textContent = timeLeft;
+
+      if (timeLeft <= 0) {
+        finishGame();
+      }
+    }, 1000);
+  }
+
+  function finishGame() {
+    gameRunning = false;
+    clearInterval(timerId);
+
+    leftAnswer.style.display = "none";
+    rightAnswer.style.display = "none";
+
+    result.textContent = "";
+    finishedMessage.textContent =
+      "終了！ 正解 " + correctCount + "問 / 全" + totalCount + "問";
+  }
+
+  function resetGame() {
+    clearInterval(timerId);
+
+    correctCount = 0;
+    totalCount = 0;
+    timeLeft = 30;
+    gameRunning = false;
+    answered = false;
+
+    correctCountSpan.textContent = correctCount;
+    totalCountSpan.textContent = totalCount;
+    timeLeftSpan.textContent = timeLeft;
+    finishedMessage.textContent = "";
+    result.textContent = "";
+
+    leftCard.className = "card";
+    rightCard.className = "card";
+
+    leftFormula.textContent = "";
+    rightFormula.textContent = "";
+    leftAnswer.textContent = "";
+    rightAnswer.textContent = "";
+  }
+</script>
+
+</body>
+</html>
