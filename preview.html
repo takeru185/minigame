@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>角度マスター｜小学生向け角度問題</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --good: #16a34a;
+      --bad: #dc2626;
+      --warn: #f59e0b;
+      --soft-blue: #dbeafe;
+      --soft-green: #dcfce7;
+      --soft-red: #fee2e2;
+      --shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e0f2fe, transparent 38%),
+                  radial-gradient(circle at top right, #fef3c7, transparent 30%),
+                  var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 18px 16px 8px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 5vw, 40px);
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    main {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 12px 14px 28px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel, .problem-card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(209, 213, 219, 0.8);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 16px;
+      align-self: start;
+    }
+
+    .problem-card {
+      padding: 16px;
+      min-height: 620px;
+    }
+
+    .section-title {
+      font-weight: 800;
+      font-size: 16px;
+      margin: 0 0 10px;
+    }
+
+    .control-group {
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .control-group:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin: 8px 0;
+      line-height: 1.35;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.1);
+      margin-right: 6px;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 15px;
+      background: white;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+      transition: transform 0.06s ease, background 0.1s ease;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn.secondary {
+      background: #374151;
+      box-shadow: none;
+    }
+
+    .btn.light {
+      background: #e5e7eb;
+      color: #111827;
+      box-shadow: none;
+    }
+
+    .btn.good {
+      background: var(--good);
+      box-shadow: 0 6px 14px rgba(22, 163, 74, 0.20);
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .row > .btn {
+      flex: 1 1 120px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0 0;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+
+    .stat .num {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .stat .cap {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--soft-blue);
+      color: #1e40af;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .timer {
+      background: #111827;
+      color: white;
+    }
+
+    .timer.warn {
+      background: var(--warn);
+      color: #111827;
+    }
+
+    .timer.danger {
+      background: var(--bad);
+      color: white;
+    }
+
+    .question {
+      font-size: clamp(20px, 4vw, 30px);
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: center;
+      margin: 12px 0 8px;
+    }
+
+    .canvas-wrap {
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 10px;
+      margin: 12px 0;
+    }
+
+    svg {
+      width: min(100%, 650px);
+      height: auto;
+      aspect-ratio: 650 / 390;
+      background: white;
+      border-radius: 12px;
+    }
+
+    .answer-area {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      max-width: 460px;
+      margin: 12px auto;
+    }
+
+    @media (max-width: 520px) {
+      .answer-area {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .answer-box {
+      display: flex;
+      align-items: center;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      padding: 0 10px;
+    }
+
+    .answer-box input {
+      border: none;
+      outline: none;
+      font-size: 24px;
+      font-weight: 900;
+      text-align: center;
+      padding: 12px 4px;
+      width: 100%;
+    }
+
+    .degree {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      max-width: 580px;
+      margin: 12px auto;
+    }
+
+    @media (max-width: 560px) {
+      .choice-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .choice {
+      border: 2px solid #dbeafe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      border-radius: 14px;
+      padding: 14px 6px;
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .choice:hover {
+      background: #dbeafe;
+    }
+
+    .feedback {
+      min-height: 44px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 18px;
+      margin-top: 8px;
+    }
+
+    .feedback.ok {
+      color: var(--good);
+    }
+
+    .feedback.ng {
+      color: var(--bad);
+    }
+
+    .explain {
+      display: none;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-left: 5px solid var(--primary);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-top: 14px;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .explain.show {
+      display: block;
+    }
+
+    .explain b {
+      color: #111827;
+    }
+
+    .mini {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .rules {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .rules ul {
+      margin: 6px 0 0 18px;
+      padding: 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .type-note {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      margin-top: -2px;
+    }
+
+    .footer-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .line {
+      stroke: #111827;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .thin {
+      stroke: #4b5563;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .dash {
+      stroke-dasharray: 8 8;
+    }
+
+    .angle-arc {
+      stroke: #2563eb;
+      stroke-width: 3;
+      fill: none;
+    }
+
+    .angle-arc.unknown {
+      stroke: #dc2626;
+      stroke-width: 4;
+    }
+
+    .label {
+      font: 800 22px system-ui, sans-serif;
+      fill: #111827;
+    }
+
+    .label.small {
+      font-size: 17px;
+      fill: #374151;
+    }
+
+    .label.unknown {
+      fill: #dc2626;
+      font-size: 28px;
+    }
+
+    .point {
+      fill: #111827;
+    }
+
+    .parallel-mark {
+      stroke: #7c3aed;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+  
+
+    .btn:disabled,
+    .choice:disabled {
+      opacity: 0.55;
+      cursor: default;
+      transform: none;
+    }
+
+    .angle-sector-unknown {
+      fill: rgba(220, 38, 38, 0.10);
+      stroke: none;
+    }
+
+    .construction-line {
+      stroke: #64748b;
+      stroke-width: 2.4;
+      stroke-dasharray: 9 7;
+      fill: none;
+    }
+
+    .equal-mark {
+      stroke: #7c3aed;
+      stroke-width: 3.2;
+      stroke-linecap: round;
+    }
+
+    .helper-label {
+      font: 700 15px system-ui, sans-serif;
+      fill: #64748b;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>角度マスター</h1>
+    <p class="subtitle">角度を求める問題を自動生成。基本問題から発展問題まで、答えたら解説も表示します。</p>
+  </header>
+
+  <main>
+    <aside class="panel">
+      <div class="control-group">
+        <p class="section-title">出題タイプ</p>
+        <label><input type="checkbox" class="type-check" value="triangle" checked> 三角形の内角</label>
+        <label><input type="checkbox" class="type-check" value="straight" checked> 直線と角</label>
+        <label><input type="checkbox" class="type-check" value="vertical" checked> 対頂角</label>
+        <label><input type="checkbox" class="type-check" value="parallel" checked> 平行線</label>
+        <label><input type="checkbox" class="type-check" value="quad" checked> 四角形の内角</label>
+        <label><input type="checkbox" class="type-check" value="multiTriangle" checked> 発展：複数の三角形</label>
+        <label><input type="checkbox" class="type-check" value="auxLine" checked> 発展：補助線</label>
+        <label><input type="checkbox" class="type-check" value="isosParallel" checked> 発展：二等辺＋平行線</label>
+        <label><input type="checkbox" class="type-check" value="exterior" checked> 発展：外角</label>
+        <label><input type="checkbox" class="type-check" value="superAdvanced" checked> 超発展：総合問題</label>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn light" id="selectAllTypesBtn" type="button">全設定</button>
+          <button class="btn light" id="clearAllTypesBtn" type="button">全取り消し</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <p class="section-title">モード</p>
+        <label for="mode">解答方法</label>
+        <select id="mode">
+          <option value="input">数字入力</option>
+          <option value="choice">4択</option>
+        </select>
+
+        <label for="timeMode">タイムアタック</label>
+        <select id="timeMode">
+          <option value="off">なし</option>
+          <option value="30">30秒</option>
+          <option value="60">60秒</option>
+          <option value="120">120秒</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <div class="row">
+          <button class="btn" id="newBtn">新しい問題</button>
+          <button class="btn secondary" id="startBtn">タイム開始</button>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <div class="num" id="correctCount">0</div>
+            <div class="cap">正解</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="wrongCount">0</div>
+            <div class="cap">不正解</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="rate">0%</div>
+            <div class="cap">正答率</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <p class="section-title">基本ルール</p>
+        <div class="rules">
+          <ul>
+            <li>三角形の内角の和は180°</li>
+            <li>四角形の内角の和は360°</li>
+            <li>直線は180°</li>
+            <li>対頂角は等しい</li>
+            <li>平行線の錯角・同位角は等しい</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="mini">
+        ※ 赤い弧が求める角 x です。図は各角度の関係に合わせて描画しています。
+      </p>
+    </aside>
+
+    <section class="problem-card">
+      <div class="topbar">
+        <span class="badge" id="typeBadge">三角形</span>
+        <span class="badge timer hidden" id="timerBadge">残り 30 秒</span>
+      </div>
+
+      <div class="question" id="question">角 x の大きさを求めましょう。</div>
+      <div class="type-note" id="typeNote"></div>
+
+      <div class="canvas-wrap">
+        <svg id="svg" viewBox="0 0 650 390" role="img" aria-label="角度問題の図"></svg>
+      </div>
+
+      <div id="inputArea" class="answer-area">
+        <div class="answer-box">
+          <input id="answerInput" type="number" inputmode="numeric" min="1" max="179" autocomplete="off" placeholder="答え" aria-label="角度の答え" />
+          <span class="degree">°</span>
+        </div>
+        <button class="btn good" id="checkBtn">答える</button>
+      </div>
+
+      <div id="choiceArea" class="choice-grid hidden"></div>
+
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+
+      <div class="footer-buttons">
+        <button class="btn light" id="showExplainBtn">解説を見る</button>
+        <button class="btn" id="nextBtn">次の問題</button>
+      </div>
+
+      <div class="explain" id="explain"></div>
+    </section>
+  </main>
+
+<script>
+(() => {
+  "use strict";
+
+  const svg = document.getElementById("svg");
+  const question = document.getElementById("question");
+  const typeBadge = document.getElementById("typeBadge");
+  const typeNote = document.getElementById("typeNote");
+  const answerInput = document.getElementById("answerInput");
+  const checkBtn = document.getElementById("checkBtn");
+  const newBtn = document.getElementById("newBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const feedback = document.getElementById("feedback");
+  const explain = document.getElementById("explain");
+  const showExplainBtn = document.getElementById("showExplainBtn");
+  const modeSelect = document.getElementById("mode");
+  const inputArea = document.getElementById("inputArea");
+  const choiceArea = document.getElementById("choiceArea");
+  const correctCountEl = document.getElementById("correctCount");
+  const wrongCountEl = document.getElementById("wrongCount");
+  const rateEl = document.getElementById("rate");
+  const timeMode = document.getElementById("timeMode");
+  const startBtn = document.getElementById("startBtn");
+  const timerBadge = document.getElementById("timerBadge");
+  const selectAllTypesBtn = document.getElementById("selectAllTypesBtn");
+  const clearAllTypesBtn = document.getElementById("clearAllTypesBtn");
+
+  const params = new URLSearchParams(location.search);
+  const debugType = params.get("type");
+  const variantParam = params.get("variant");
+  const debugVariant = variantParam === null ? Number.NaN : Number(variantParam);
+
+  let current = null;
+  let answered = false;
+  let correct = 0;
+  let wrong = 0;
+  let timer = null;
+  let pendingNext = null;
+  let remain = 0;
+  let timeActive = false;
+
+  const TYPE_NAMES = {
+    triangle: "三角形の内角",
+    straight: "直線と角",
+    vertical: "対頂角",
+    parallel: "平行線",
+    quad: "四角形の内角",
+    multiTriangle: "発展：複数の三角形",
+    auxLine: "発展：補助線",
+    isosParallel: "発展：二等辺＋平行線",
+    exterior: "発展：外角",
+    superAdvanced: "超発展：総合問題"
+  };
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function choice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function pickVariant(arr) {
+    if (Number.isInteger(debugVariant) && debugVariant >= 0 && debugVariant < arr.length) {
+      return arr[debugVariant];
+    }
+    return choice(arr);
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function updateStats() {
+    correctCountEl.textContent = correct;
+    wrongCountEl.textContent = wrong;
+    const total = correct + wrong;
+    rateEl.textContent = total ? `${Math.round(correct / total * 100)}%` : "0%";
+  }
+
+  function clearSvg() {
+    svg.replaceChildren();
+  }
+
+  function el(name, attrs = {}, value = "") {
+    const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+    Object.entries(attrs).forEach(([key, val]) => node.setAttribute(key, String(val)));
+    if (value !== "") node.textContent = value;
+    svg.appendChild(node);
+    return node;
+  }
+
+  function line(x1, y1, x2, y2, cls = "line") {
+    return el("line", {x1, y1, x2, y2, class: cls});
+  }
+
+  function path(d, cls = "angle-arc") {
+    return el("path", {d, class: cls});
+  }
+
+  function text(x, y, value, cls = "label") {
+    return el("text", {
+      x, y, class: cls,
+      "text-anchor": "middle",
+      "dominant-baseline": "middle"
+    }, value);
+  }
+
+  function point(p, radius = 4) {
+    return el("circle", {cx: p.x, cy: p.y, r: radius, class: "point"});
+  }
+
+  function polar(origin, radius, degrees) {
+    const rad = degrees * Math.PI / 180;
+    return {
+      x: origin.x + radius * Math.cos(rad),
+      y: origin.y - radius * Math.sin(rad)
+    };
+  }
+
+  function angleOf(origin, target) {
+    return Math.atan2(origin.y - target.y, target.x - origin.x) * 180 / Math.PI;
+  }
+
+  function normalizeAngle(degrees) {
+    let d = degrees % 360;
+    if (d < 0) d += 360;
+    return d;
+  }
+
+  function smallSweep(start, end) {
+    let d = normalizeAngle(end) - normalizeAngle(start);
+    while (d <= -180) d += 360;
+    while (d > 180) d -= 360;
+    return d;
+  }
+
+  function angleGeometry(center, p1, p2, radius, useLarge = false) {
+    const start = angleOf(center, p1);
+    let sweep = smallSweep(start, angleOf(center, p2));
+    if (useLarge) sweep = sweep > 0 ? sweep - 360 : sweep + 360;
+    const end = start + sweep;
+    return {
+      start,
+      end,
+      sweep,
+      startPoint: polar(center, radius, start),
+      endPoint: polar(center, radius, end),
+      midPoint: polar(center, radius, start + sweep / 2)
+    };
+  }
+
+  function drawAngle(center, p1, p2, radius, options = {}) {
+    const {
+      cls = "angle-arc",
+      label = "",
+      labelCls = "label small",
+      labelRadius = radius + 23,
+      fillUnknown = false,
+      useLarge = false
+    } = options;
+    const g = angleGeometry(center, p1, p2, radius, useLarge);
+    const large = Math.abs(g.sweep) > 180 ? 1 : 0;
+    const sweepFlag = g.sweep < 0 ? 1 : 0;
+
+    if (fillUnknown) {
+      path(
+        `M ${center.x} ${center.y} L ${g.startPoint.x} ${g.startPoint.y} ` +
+        `A ${radius} ${radius} 0 ${large} ${sweepFlag} ${g.endPoint.x} ${g.endPoint.y} Z`,
+        "angle-sector-unknown"
+      );
+    }
+
+    path(
+      `M ${g.startPoint.x} ${g.startPoint.y} ` +
+      `A ${radius} ${radius} 0 ${large} ${sweepFlag} ${g.endPoint.x} ${g.endPoint.y}`,
+      cls
+    );
+
+    if (label !== "") {
+      const lp = polar(center, labelRadius, g.start + g.sweep / 2);
+      text(lp.x, lp.y, label, labelCls);
+    }
+    return g;
+  }
+
+  function rayPoint(origin, degrees, length) {
+    return polar(origin, length, degrees);
+  }
+
+  function cross(a, b) {
+    return a.x * b.y - a.y * b.x;
+  }
+
+  function rayVector(degrees) {
+    const rad = degrees * Math.PI / 180;
+    return {x: Math.cos(rad), y: -Math.sin(rad)};
+  }
+
+  function intersectRays(p1, deg1, p2, deg2) {
+    const v1 = rayVector(deg1);
+    const v2 = rayVector(deg2);
+    const delta = {x: p2.x - p1.x, y: p2.y - p1.y};
+    const denominator = cross(v1, v2);
+    if (Math.abs(denominator) < 1e-8) throw new Error("Parallel rays cannot intersect");
+    const t = cross(delta, v2) / denominator;
+    return {x: p1.x + t * v1.x, y: p1.y + t * v1.y};
+  }
+
+  function rayToY(origin, degrees, targetY) {
+    const v = rayVector(degrees);
+    if (Math.abs(v.y) < 1e-8) throw new Error("Horizontal ray does not reach target Y");
+    const t = (targetY - origin.y) / v.y;
+    return {x: origin.x + t * v.x, y: targetY};
+  }
+
+  function extendLine(p1, p2, before = 0, after = 0, cls = "line") {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy);
+    const ux = dx / len;
+    const uy = dy / len;
+    line(
+      p1.x - ux * before,
+      p1.y - uy * before,
+      p2.x + ux * after,
+      p2.y + uy * after,
+      cls
+    );
+  }
+
+  function sideTick(p1, p2, position = 0.5) {
+    const x = p1.x + (p2.x - p1.x) * position;
+    const y = p1.y + (p2.y - p1.y) * position;
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy);
+    const nx = -dy / len;
+    const ny = dx / len;
+    line(x - nx * 9, y - ny * 9, x + nx * 9, y + ny * 9, "equal-mark");
+  }
+
+  function parallelMarks(y, x = 105) {
+    line(x, y - 13, x + 15, y + 13, "parallel-mark");
+    line(x + 22, y - 13, x + 37, y + 13, "parallel-mark");
+  }
+
+  function vertexLabels(points) {
+    points.forEach(({p, name, dx = 0, dy = 0}) => text(p.x + dx, p.y + dy, name, "label small"));
+  }
+
+  function assertValidProblem(problem) {
+    if (!problem || !Number.isFinite(problem.answer) || problem.answer <= 0 || problem.answer >= 180) {
+      throw new Error(`Invalid problem answer: ${problem?.answer}`);
+    }
+    return problem;
+  }
+
+  function triangleProblem() {
+    const a = choice([35, 40, 45, 50, 55, 60, 65, 70]);
+    const b = choice([40, 45, 50, 55, 60, 65, 70]);
+    const x = 180 - a - b;
+    if (x < 25 || x > 105) return triangleProblem();
+
+    return assertValidProblem({
+      type: "triangle",
+      badge: TYPE_NAMES.triangle,
+      note: "三角形の3つの内角の和は180°です。",
+      answer: x,
+      question: "赤い角 x は何度ですか？",
+      explanation: `<b>三角形の内角の和は180°</b>です。<br>x = 180° - ${a}° - ${b}° = <b>${x}°</b>。`,
+      draw() {
+        clearSvg();
+        const B = {x: 95, y: 310};
+        const C = {x: 555, y: 310};
+        const A = intersectRays(B, a, C, 180 - b);
+        line(A.x, A.y, B.x, B.y);
+        line(B.x, B.y, C.x, C.y);
+        line(C.x, C.y, A.x, A.y);
+        [A, B, C].forEach(point);
+        drawAngle(B, C, A, 40, {label: `${a}°`});
+        drawAngle(C, A, B, 40, {label: `${b}°`});
+        drawAngle(A, B, C, 48, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 70, fillUnknown: true});
+      }
+    });
+  }
+
+  function straightProblem() {
+    const a = choice([35, 45, 55, 65, 75, 105, 115, 125, 135, 145]);
+    const x = 180 - a;
+    return assertValidProblem({
+      type: "straight",
+      badge: TYPE_NAMES.straight,
+      note: "一直線上で隣り合う角の和は180°です。",
+      answer: x,
+      question: "直線上の赤い角 x は何度ですか？",
+      explanation: `一直線なので、${a}° + x = 180°。<br>x = 180° - ${a}° = <b>${x}°</b>。`,
+      draw() {
+        clearSvg();
+        const O = {x: 325, y: 245};
+        const R = {x: 575, y: O.y};
+        const L = {x: 75, y: O.y};
+        const U = rayPoint(O, a, 205);
+        line(L.x, L.y, R.x, R.y);
+        line(O.x, O.y, U.x, U.y);
+        point(O);
+        drawAngle(O, R, U, 55, {label: `${a}°`, labelRadius: 82});
+        drawAngle(O, U, L, 72, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 98, fillUnknown: true});
+      }
+    });
+  }
+
+  function verticalProblem() {
+    const a = choice([40, 50, 60, 70, 80, 100, 110, 120, 130, 140]);
+    const baseDir = 18;
+    const otherDir = baseDir + a;
+    return assertValidProblem({
+      type: "vertical",
+      badge: TYPE_NAMES.vertical,
+      note: "2本の直線が交わるとき、向かい合う対頂角は等しくなります。",
+      answer: a,
+      question: "対頂角を使って、赤い角 x を求めましょう。",
+      explanation: `向かい合う角は対頂角なので等しくなります。<br>x = <b>${a}°</b>。`,
+      draw() {
+        clearSvg();
+        const O = {x: 325, y: 195};
+        const p1 = rayPoint(O, baseDir, 190);
+        const p1o = rayPoint(O, baseDir + 180, 190);
+        const p2 = rayPoint(O, otherDir, 190);
+        const p2o = rayPoint(O, otherDir + 180, 190);
+        line(p1.x, p1.y, p1o.x, p1o.y);
+        line(p2.x, p2.y, p2o.x, p2o.y);
+        point(O);
+        drawAngle(O, p1, p2, 55, {label: `${a}°`, labelRadius: 82});
+        drawAngle(O, p1o, p2o, 72, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 100, fillUnknown: true});
+      }
+    });
+  }
+
+  function parallelProblem() {
+    const theta = choice([35, 40, 45, 50, 55, 60, 65, 70]);
+    const relation = choice(["equal", "supplement"]);
+    const answer = relation === "equal" ? theta : 180 - theta;
+
+    return assertValidProblem({
+      type: "parallel",
+      badge: TYPE_NAMES.parallel,
+      note: relation === "equal" ? "錯角・同位角の等しい関係を使います。" : "平行線の角と一直線180°を組み合わせます。",
+      answer,
+      question: "平行線を使って、赤い角 x を求めましょう。",
+      explanation: relation === "equal"
+        ? `平行線の錯角は等しいので、x = <b>${theta}°</b>。`
+        : `まず錯角は ${theta}°。隣り合う角は180°なので、x = 180° - ${theta}° = <b>${answer}°</b>。`,
+      draw() {
+        clearSvg();
+        const topY = 115;
+        const bottomY = 285;
+        const bottom = {x: 205, y: bottomY};
+        const top = {x: bottom.x + (bottomY - topY) / Math.tan(theta * Math.PI / 180), y: topY};
+        line(55, topY, 595, topY);
+        line(55, bottomY, 595, bottomY);
+        extendLine(bottom, top, 85, 85);
+        parallelMarks(topY, 80);
+        parallelMarks(bottomY, 80);
+        point(top); point(bottom);
+
+        const topLeft = {x: top.x - 100, y: top.y};
+        const topDownLeft = rayPoint(top, theta + 180, 100);
+        drawAngle(top, topLeft, topDownLeft, 43, {label: `${theta}°`, labelRadius: 68});
+
+        if (relation === "equal") {
+          const bottomRight = {x: bottom.x + 100, y: bottom.y};
+          const bottomUpRight = rayPoint(bottom, theta, 100);
+          drawAngle(bottom, bottomRight, bottomUpRight, 58, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 82, fillUnknown: true});
+        } else {
+          const bottomLeft = {x: bottom.x - 100, y: bottom.y};
+          const bottomUpRight = rayPoint(bottom, theta, 100);
+          drawAngle(bottom, bottomUpRight, bottomLeft, 58, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 84, fillUnknown: true});
+        }
+      }
+    });
+  }
+
+  function quadProblem() {
+    const alpha = choice([55, 60, 65, 70, 75]);
+    const beta = choice([60, 65, 70, 75, 80]);
+    const answer = 180 - beta;
+
+    return assertValidProblem({
+      type: "quad",
+      badge: TYPE_NAMES.quad,
+      note: "四角形の4つの内角の和は360°です。",
+      answer,
+      question: "四角形の赤い角 x は何度ですか？",
+      explanation: `四角形の内角の和は360°です。<br>x = 360° - ${alpha}° - ${180 - alpha}° - ${beta}° = <b>${answer}°</b>。`,
+      draw() {
+        clearSvg();
+        const h = 190;
+        const BL = {x: 95, y: 310};
+        const BR = {x: 555, y: 310};
+        const TL = {x: BL.x + h / Math.tan(alpha * Math.PI / 180), y: BL.y - h};
+        const TR = {x: BR.x - h / Math.tan(beta * Math.PI / 180), y: BR.y - h};
+        line(BL.x, BL.y, TL.x, TL.y);
+        line(TL.x, TL.y, TR.x, TR.y);
+        line(TR.x, TR.y, BR.x, BR.y);
+        line(BR.x, BR.y, BL.x, BL.y);
+        [BL, TL, TR, BR].forEach(point);
+        drawAngle(BL, BR, TL, 38, {label: `${alpha}°`, labelRadius: 62});
+        drawAngle(TL, BL, TR, 38, {label: `${180 - alpha}°`, labelRadius: 64});
+        drawAngle(BR, TR, BL, 38, {label: `${beta}°`, labelRadius: 62});
+        drawAngle(TR, TL, BR, 44, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 70, fillUnknown: true});
+      }
+    });
+  }
+
+  function multiTriangleProblem() {
+    const variants = [
+      {leftA: 60, leftB: 55, rightD: 55, rightE: 55},
+      {leftA: 65, leftB: 50, rightD: 60, rightE: 50},
+      {leftA: 50, leftB: 60, rightD: 45, rightE: 55},
+      {leftA: 70, leftB: 45, rightD: 50, rightE: 45},
+      {leftA: 55, leftB: 55, rightD: 55, rightE: 45}
+    ];
+    const v = pickVariant(variants);
+    const leftC = 180 - v.leftA - v.leftB;
+    const rightC = 180 - v.rightD - v.rightE;
+    const answer = 180 - leftC - rightC;
+
+    return assertValidProblem({
+      type: "multiTriangle",
+      badge: TYPE_NAMES.multiTriangle,
+      note: "左右の三角形でCの角をそれぞれ求め、C点の一直線180°を使います。",
+      answer,
+      question: "2つの三角形を使って、C点の赤い角 x を求めましょう。",
+      explanation: `左の三角形で、∠ACB = 180° - ${v.leftA}° - ${v.leftB}° = <b>${leftC}°</b>。<br>` +
+        `右の三角形で、∠DCE = 180° - ${v.rightD}° - ${v.rightE}° = <b>${rightC}°</b>。<br>` +
+        `B・C・Eは一直線なので、${leftC}° + x + ${rightC}° = 180°。<br>` +
+        `x = <b>${answer}°</b>。`,
+      draw() {
+        clearSvg();
+        const B = {x: 55, y: 315};
+        const C = {x: 325, y: 315};
+        const E = {x: 605, y: 315};
+        const A = intersectRays(B, v.leftB, C, 180 - leftC);
+        const D = intersectRays(C, rightC, E, 180 - v.rightE);
+
+        line(40, C.y, 620, C.y);
+        line(A.x, A.y, B.x, B.y);
+        line(A.x, A.y, C.x, C.y);
+        line(C.x, C.y, D.x, D.y);
+        line(D.x, D.y, E.x, E.y);
+        [A, B, C, D, E].forEach(point);
+
+        drawAngle(A, B, C, 38, {label: `${v.leftA}°`, labelRadius: 61});
+        drawAngle(B, C, A, 38, {label: `${v.leftB}°`, labelRadius: 62});
+        drawAngle(D, C, E, 38, {label: `${v.rightD}°`, labelRadius: 61});
+        drawAngle(E, D, C, 38, {label: `${v.rightE}°`, labelRadius: 62});
+        drawAngle(C, A, D, 62, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 86, fillUnknown: true});
+
+        vertexLabels([
+          {p: A, name: "A", dy: -22},
+          {p: B, name: "B", dx: -15, dy: 22},
+          {p: C, name: "C", dy: 25},
+          {p: D, name: "D", dy: -22},
+          {p: E, name: "E", dx: 15, dy: 22}
+        ]);
+      }
+    });
+  }
+
+  function auxLineProblem() {
+    const variants = [
+      {a: 30, b: 40},
+      {a: 35, b: 45},
+      {a: 40, b: 50},
+      {a: 45, b: 35},
+      {a: 50, b: 40}
+    ];
+    const v = pickVariant(variants);
+    const answer = v.a + v.b;
+
+    return assertValidProblem({
+      type: "auxLine",
+      badge: TYPE_NAMES.auxLine,
+      note: "Qを通る青い破線を補助線として使います。上下の直線と平行です。",
+      answer,
+      question: "補助線を使って、赤い角 x を求めましょう。",
+      explanation: `Qを通る補助線を引くと、錯角・同位角により、x は ${v.a}° と ${v.b}° に分かれます。<br>` +
+        `x = ${v.a}° + ${v.b}° = <b>${answer}°</b>。`,
+      draw() {
+        clearSvg();
+        const topY = 90;
+        const bottomY = 310;
+        const Q = {x: 340, y: 200};
+        const P = rayToY(Q, 180 - v.a, topY);
+        const R = rayToY(Q, 180 + v.b, bottomY);
+
+        line(55, topY, 595, topY);
+        line(55, bottomY, 595, bottomY);
+        line(P.x, P.y, Q.x, Q.y);
+        line(Q.x, Q.y, R.x, R.y);
+        line(70, Q.y, 585, Q.y, "construction-line");
+        parallelMarks(topY, 75);
+        parallelMarks(Q.y, 75);
+        parallelMarks(bottomY, 75);
+        [P, Q, R].forEach(point);
+
+        drawAngle(P, {x: P.x + 100, y: P.y}, Q, 40, {label: `${v.a}°`, labelRadius: 65});
+        drawAngle(R, {x: R.x + 100, y: R.y}, Q, 40, {label: `${v.b}°`, labelRadius: 65});
+        drawAngle(Q, P, R, 62, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 86, fillUnknown: true});
+        text(515, Q.y - 18, "補助線", "helper-label");
+      }
+    });
+  }
+
+  function isosParallelProblem() {
+    const base = pickVariant([40, 45, 50, 55, 60, 65]);
+    const answer = 180 - 2 * base;
+
+    return assertValidProblem({
+      type: "isosParallel",
+      badge: TYPE_NAMES.isosParallel,
+      note: "AB＝AC、頂点Aを通る直線ℓとBCは平行です。",
+      answer,
+      question: "二等辺三角形と平行線を使って、赤い角 x を求めましょう。",
+      explanation: `ℓ ∥ BC なので、平行線の錯角から ∠ABC = ${base}°。<br>` +
+        `AB = AC の二等辺三角形なので、∠ABC = ∠ACB = ${base}°。<br>` +
+        `x = 180° - ${base}° - ${base}° = <b>${answer}°</b>。`,
+      draw() {
+        clearSvg();
+        const A = {x: 325, y: 100};
+        const baseY = 315;
+        const half = (baseY - A.y) / Math.tan(base * Math.PI / 180);
+        const B = {x: A.x - half, y: baseY};
+        const C = {x: A.x + half, y: baseY};
+        const D = rayPoint(A, base, 100);
+
+        line(45, A.y, 605, A.y);
+        line(45, baseY, 605, baseY);
+        line(A.x, A.y, B.x, B.y);
+        line(A.x, A.y, C.x, C.y);
+        line(A.x, A.y, D.x, D.y);
+        [A, B, C].forEach(point);
+        sideTick(A, B);
+        sideTick(A, C);
+        parallelMarks(A.y, 70);
+        parallelMarks(baseY, 70);
+
+        drawAngle(A, {x: A.x + 120, y: A.y}, D, 40, {label: `${base}°`, labelRadius: 65});
+        drawAngle(A, B, C, 62, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 86, fillUnknown: true});
+        text(575, A.y - 18, "ℓ", "label");
+        vertexLabels([
+          {p: A, name: "A", dy: -25},
+          {p: B, name: "B", dy: 24},
+          {p: C, name: "C", dy: 24}
+        ]);
+      }
+    });
+  }
+
+  function exteriorProblem() {
+    const variants = [
+      {a: 45, b: 55},
+      {a: 50, b: 60},
+      {a: 55, b: 65},
+      {a: 40, b: 70},
+      {a: 50, b: 55}
+    ];
+    const v = pickVariant(variants);
+    const interiorC = 180 - v.a - v.b;
+    const answer = v.a + v.b;
+
+    return assertValidProblem({
+      type: "exterior",
+      badge: TYPE_NAMES.exterior,
+      note: "三角形の外角は、離れた2つの内角の和です。",
+      answer,
+      question: "三角形の赤い外角 x は何度ですか？",
+      explanation: `外角は、それと隣り合わない2つの内角の和です。<br>x = ${v.a}° + ${v.b}° = <b>${answer}°</b>。`,
+      draw() {
+        clearSvg();
+        const B = {x: 100, y: 310};
+        const C = {x: 475, y: 310};
+        const A = intersectRays(B, v.a, C, 180 - interiorC);
+        const D = {x: 610, y: C.y};
+        line(A.x, A.y, B.x, B.y);
+        line(B.x, B.y, D.x, D.y);
+        line(A.x, A.y, C.x, C.y);
+        [A, B, C].forEach(point);
+        drawAngle(B, C, A, 40, {label: `${v.a}°`, labelRadius: 64});
+        drawAngle(A, B, C, 40, {label: `${v.b}°`, labelRadius: 64});
+        drawAngle(C, D, A, 58, {cls: "angle-arc unknown", label: "x", labelCls: "label unknown", labelRadius: 82, fillUnknown: true});
+        text(555, C.y + 24, "延長線", "helper-label");
+      }
+    });
+  }
+
+  function superAdvancedProblem() {
+    /*
+      超発展：短絡解法を防ぐ多段階問題
+
+      使用する関係
+      1. 平行線の同位角
+      2. 二等辺三角形の底角
+      3. 一直線の角
+      4. 三角形の内角の和
+      5. 対頂角
+      6. 別の二等辺三角形
+      7. 外角
+
+      x は最初の平行線を横切る線上には置かない。
+    */
+    const variants = [
+      {alpha: 50, beta: 20},
+      {alpha: 55, beta: 25},
+      {alpha: 60, beta: 20},
+      {alpha: 55, beta: 15},
+      {alpha: 60, beta: 10},
+      {alpha: 65, beta: 15}
+    ];
+
+    const v = choice(variants);
+    const angleADC = v.alpha - v.beta;
+    const baseDEF = (180 - angleADC) / 2;
+    const x = 180 - baseDEF;
+
+    return {
+      type: "superAdvanced",
+      badge: "超発展：総合問題",
+      note: "平行線、2つの二等辺三角形、一直線、三角形、対頂角、外角を順番に使います。",
+      answer: x,
+      question: "複数の角を順番に求めて、赤い外角 x を求めましょう。",
+      explanation: `① ℓ ∥ BC なので、同位角より ∠ABC = ${v.alpha}°。<br>
+        ② AB = AC の二等辺三角形なので、∠ACB = ${v.alpha}°。<br>
+        ③ B・C・D は一直線なので、∠ACD = 180° - ${v.alpha}° = <b>${180 - v.alpha}°</b>。<br>
+        ④ ∠CAD = ${v.beta}° だから、三角形ACDで、∠ADC = 180° - ${180 - v.alpha}° - ${v.beta}° = <b>${angleADC}°</b>。<br>
+        ⑤ A・D・E、C・D・F はそれぞれ一直線なので、対頂角より ∠EDF = ${angleADC}°。<br>
+        ⑥ DE = DF の二等辺三角形なので、∠DFE = (180° - ${angleADC}°) ÷ 2 = <b>${baseDEF}°</b>。<br>
+        ⑦ E・F・G は一直線なので、x = 180° - ${baseDEF}° = <b>${x}°</b> です。`,
+      draw() {
+        clearSvg();
+
+        const A = {x: 185, y: 92};
+        const baseY = 265;
+        const h = baseY - A.y;
+
+        // AB = AC となるようにB・Cを計算
+        const halfBase = h / Math.tan(v.alpha * Math.PI / 180);
+        const B = {x: A.x - halfBase, y: baseY};
+        const C = {x: A.x + halfBase, y: baseY};
+
+        // ∠CAD = beta となるD
+        const gamma = v.alpha - v.beta;
+        const dOffset = h / Math.tan(gamma * Math.PI / 180);
+        const D = {x: A.x + dOffset, y: baseY};
+
+        // ABの延長点P
+        const P = {
+          x: A.x + (A.x - B.x) * 0.52,
+          y: A.y + (A.y - B.y) * 0.52
+        };
+
+        // A-D-E と C-D-F を一直線にし、DE = DF
+        const secondLen = 92;
+        const dirDE = angleOf(A, D);
+        const E = rayPoint(D, dirDE, secondLen);
+        const F = {x: D.x + secondLen, y: D.y};
+
+        // EFをFの先まで延長
+        const efDx = F.x - E.x;
+        const efDy = F.y - E.y;
+        const efLen = Math.hypot(efDx, efDy);
+        const extendLen = 78;
+        const G = {
+          x: F.x + efDx / efLen * extendLen,
+          y: F.y + efDy / efLen * extendLen
+        };
+
+        // 平行線ℓとB-C-D-Fの直線
+        line(45, A.y, 610, A.y);
+        line(45, baseY, 615, baseY);
+
+        // 左の二等辺三角形
+        line(A.x,A.y,B.x,B.y);
+        line(A.x,A.y,C.x,C.y);
+
+        // ABの延長
+        line(A.x,A.y,P.x,P.y);
+
+        // A-D-E の一直線
+        line(A.x,A.y,D.x,D.y);
+        line(D.x,D.y,E.x,E.y);
+
+        // 右の二等辺三角形
+        line(D.x,D.y,F.x,F.y);
+        line(E.x,E.y,F.x,F.y);
+
+        // EFの延長
+        line(F.x,F.y,G.x,G.y);
+
+        [A,B,C,D,E,F].forEach(pt => point(pt));
+
+        // 与えられた角 alpha
+        drawAngle(A, {x:A.x+120,y:A.y}, P, 38, {
+          label: `${v.alpha}°`,
+          labelRadius: 64
+        });
+
+        // 与えられた角 beta
+        drawAngle(A, C, D, 58, {
+          label: `${v.beta}°`,
+          labelRadius: 80
+        });
+
+        // 求める外角 x
+        drawAngle(F, D, G, 52, {
+          cls: "angle-arc unknown",
+          label: "x",
+          labelCls: "label unknown",
+          labelRadius: 78,
+          fillUnknown: true
+        });
+
+        // AB = AC
+        sideTick(A, B, 0.53);
+        sideTick(A, C, 0.53);
+
+        // DE = DF
+        sideTick(D, E, 0.52);
+        sideTick(D, F, 0.52);
+
+        // 平行線マーク
+        parallelMarks(A.y, 78);
+        parallelMarks(baseY, 78);
+
+        // 点名
+        text(A.x,A.y-27,"A","label small");
+        text(B.x-14,B.y+22,"B","label small");
+        text(C.x,C.y+23,"C","label small");
+        text(D.x,D.y+23,"D","label small");
+        text(E.x-12,E.y+22,"E","label small");
+        text(F.x+13,F.y+22,"F","label small");
+        text(G.x+12,G.y+10,"G","label small");
+        text(574,A.y-18,"ℓ","label");
+      }
+    };
+  }
+
+
+  const generators = {
+    triangle: triangleProblem,
+    straight: straightProblem,
+    vertical: verticalProblem,
+    parallel: parallelProblem,
+    quad: quadProblem,
+    multiTriangle: multiTriangleProblem,
+    auxLine: auxLineProblem,
+    isosParallel: isosParallelProblem,
+    exterior: exteriorProblem,
+    superAdvanced: superAdvancedProblem
+  };
+
+  function selectedTypes() {
+    return Array.from(document.querySelectorAll(".type-check:checked")).map(cb => cb.value);
+  }
+
+  function setAnswerControlsDisabled(disabled) {
+    checkBtn.disabled = disabled;
+    answerInput.disabled = disabled;
+    choiceArea.querySelectorAll("button").forEach(button => button.disabled = disabled);
+  }
+
+  function renderNoSelection() {
+    current = null;
+    answered = false;
+    clearSvg();
+    question.textContent = "出題タイプを1つ以上選んでください。";
+    typeBadge.textContent = "未選択";
+    typeNote.textContent = "左のチェックボックスから出題タイプを選択してください。";
+    explain.innerHTML = "";
+    explain.classList.remove("show");
+    choiceArea.classList.add("hidden");
+    inputArea.classList.remove("hidden");
+    feedback.textContent = "出題タイプが選択されていません。";
+    feedback.className = "feedback ng";
+    setAnswerControlsDisabled(true);
+  }
+
+  function newProblem() {
+    clearTimeout(pendingNext);
+    pendingNext = null;
+    answered = false;
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    explain.classList.remove("show");
+    answerInput.value = "";
+
+    const types = selectedTypes();
+    if (types.length === 0) {
+      renderNoSelection();
+      return;
+    }
+
+    const type = debugType && generators[debugType] ? debugType : choice(types);
+    try {
+      current = generators[type]();
+    } catch (error) {
+      console.error(error);
+      feedback.textContent = "問題の生成に失敗しました。次の問題を押してください。";
+      feedback.className = "feedback ng";
+      return;
+    }
+
+    question.textContent = current.question;
+    typeBadge.textContent = current.badge;
+    typeNote.textContent = current.note;
+    explain.innerHTML = current.explanation;
+    current.draw();
+    setupAnswerMode();
+    setAnswerControlsDisabled(false);
+    if (modeSelect.value === "input") answerInput.focus();
+  }
+
+  function makeChoices(answer) {
+    const candidates = new Set([answer]);
+    const offsets = shuffle([-40, -30, -25, -20, -15, -10, 10, 15, 20, 25, 30, 40]);
+    for (const offset of offsets) {
+      const value = answer + offset;
+      if (value > 0 && value < 180) candidates.add(value);
+      if (candidates.size === 4) break;
+    }
+    while (candidates.size < 4) {
+      const value = randInt(2, 17) * 10;
+      if (value !== answer && value < 180) candidates.add(value);
+    }
+    return shuffle([...candidates]);
+  }
+
+  function setupAnswerMode() {
+    if (!current) return;
+    if (modeSelect.value === "choice") {
+      inputArea.classList.add("hidden");
+      choiceArea.classList.remove("hidden");
+      choiceArea.replaceChildren();
+      makeChoices(current.answer).forEach(value => {
+        const button = document.createElement("button");
+        button.className = "choice";
+        button.type = "button";
+        button.textContent = `${value}°`;
+        button.addEventListener("click", () => checkAnswer(value));
+        choiceArea.appendChild(button);
+      });
+    } else {
+      choiceArea.classList.add("hidden");
+      inputArea.classList.remove("hidden");
+    }
+  }
+
+  function checkAnswer(rawValue) {
+    if (!current || answered) return;
+    const value = Number(rawValue !== undefined ? rawValue : answerInput.value);
+    if (!Number.isFinite(value) || value <= 0 || value >= 180) {
+      feedback.textContent = "1～179の数字を入力してください。";
+      feedback.className = "feedback ng";
+      return;
+    }
+
+    answered = true;
+    setAnswerControlsDisabled(true);
+    const isCorrect = value === current.answer;
+    if (isCorrect) {
+      correct += 1;
+      feedback.textContent = "正解！";
+      feedback.className = "feedback ok";
+    } else {
+      wrong += 1;
+      feedback.textContent = `不正解。正解は ${current.answer}° です。`;
+      feedback.className = "feedback ng";
+    }
+    updateStats();
+    explain.classList.add("show");
+
+    if (timeActive) {
+      pendingNext = setTimeout(newProblem, isCorrect ? 600 : 1100);
+    }
+  }
+
+  function stopTimer(showResult = false) {
+    clearInterval(timer);
+    timer = null;
+    clearTimeout(pendingNext);
+    pendingNext = null;
+    timeActive = false;
+    if (showResult) {
+      timerBadge.textContent = "終了";
+      timerBadge.classList.remove("warn", "danger");
+      feedback.textContent = `終了：正解 ${correct}問／不正解 ${wrong}問／正答率 ${rateEl.textContent}`;
+      feedback.className = "feedback ok";
+      setAnswerControlsDisabled(true);
+    }
+  }
+
+  function updateTimerBadge() {
+    timerBadge.textContent = `残り ${remain} 秒`;
+    timerBadge.classList.remove("warn", "danger");
+    if (remain <= 5) timerBadge.classList.add("danger");
+    else if (remain <= 10) timerBadge.classList.add("warn");
+  }
+
+  function startTimer() {
+    const seconds = Number(timeMode.value);
+    if (!seconds) {
+      stopTimer(false);
+      timerBadge.classList.add("hidden");
+      feedback.textContent = "タイムを選択してから開始してください。";
+      feedback.className = "feedback ng";
+      return;
+    }
+    if (selectedTypes().length === 0) {
+      renderNoSelection();
+      return;
+    }
+
+    stopTimer(false);
+    remain = seconds;
+    timeActive = true;
+    correct = 0;
+    wrong = 0;
+    updateStats();
+    timerBadge.classList.remove("hidden");
+    updateTimerBadge();
+    newProblem();
+
+    timer = setInterval(() => {
+      remain -= 1;
+      updateTimerBadge();
+      if (remain <= 0) stopTimer(true);
+    }, 1000);
+  }
+
+  checkBtn.addEventListener("click", () => checkAnswer());
+  answerInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") checkAnswer();
+  });
+  newBtn.addEventListener("click", newProblem);
+  nextBtn.addEventListener("click", newProblem);
+  showExplainBtn.addEventListener("click", () => explain.classList.toggle("show"));
+  modeSelect.addEventListener("change", () => {
+    setupAnswerMode();
+    setAnswerControlsDisabled(answered);
+  });
+  startBtn.addEventListener("click", startTimer);
+  timeMode.addEventListener("change", () => {
+    if (timeActive) {
+      stopTimer(false);
+      timerBadge.classList.add("hidden");
+      feedback.textContent = "タイム設定を変更したため、タイムアタックを停止しました。";
+      feedback.className = "feedback";
+      setAnswerControlsDisabled(false);
+    }
+  });
+
+  document.querySelectorAll(".type-check").forEach(cb => {
+    cb.addEventListener("change", () => {
+      if (selectedTypes().length === 0) renderNoSelection();
+      else newProblem();
+    });
+  });
+
+  selectAllTypesBtn.addEventListener("click", () => {
+    document.querySelectorAll(".type-check").forEach(cb => cb.checked = true);
+    newProblem();
+  });
+
+  clearAllTypesBtn.addEventListener("click", () => {
+    document.querySelectorAll(".type-check").forEach(cb => cb.checked = false);
+    renderNoSelection();
+  });
+
+  if (debugType && generators[debugType]) {
+    document.querySelectorAll(".type-check").forEach(cb => cb.checked = cb.value === debugType);
+  }
+
+  window.__angleAppDebug = () => ({
+    type: current?.type ?? null,
+    answer: current?.answer ?? null,
+    answered,
+    selectedTypes: selectedTypes()
+  });
+
+  updateStats();
+  newProblem();
+})();
+</script>
+</body>
+</html>
