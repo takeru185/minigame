@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HUNTER×HUNTER 4択クイズ</title>
+<style>
+:root {
+  --bg:#0b1220; --panel:#111b2e; --panel2:#16233a; --text:#eef4ff;
+  --muted:#9fb0c9; --accent:#f1c84b; --good:#41d18a; --bad:#ff6b6b;
+  --line:#2a3b59;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+background:radial-gradient(circle at top,#182b49 0,#0b1220 45%);color:var(--text);}
+.app{width:min(760px,92vw);margin:0 auto;padding:32px 0 48px}
+.brand{font-weight:900;letter-spacing:.08em;color:var(--accent);font-size:clamp(22px,4vw,34px)}
+.sub{color:var(--muted);margin-top:6px}
+.card{margin-top:24px;background:rgba(17,27,46,.94);border:1px solid var(--line);border-radius:20px;
+padding:clamp(20px,4vw,34px);box-shadow:0 18px 60px rgba(0,0,0,.32)}
+.topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.badge{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-weight:700}
+.progress{height:10px;background:#0a1020;border-radius:999px;overflow:hidden;margin:14px 0 26px}
+.progress>div{height:100%;background:linear-gradient(90deg,#f1c84b,#ff8a4c);transition:.3s}
+h1{font-size:clamp(22px,3.6vw,32px);line-height:1.45;margin:0 0 24px}
+.answers{display:grid;gap:12px}
+button{font:inherit}
+.choice{width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:16px 18px;
+border-radius:14px;text-align:left;cursor:pointer;font-weight:700;transition:.18s}
+.choice:hover{transform:translateY(-1px);border-color:#5d78a0}
+.choice.correct{background:rgba(65,209,138,.15);border-color:var(--good)}
+.choice.wrong{background:rgba(255,107,107,.15);border-color:var(--bad)}
+.choice:disabled{cursor:default;transform:none}
+.feedback{min-height:28px;margin-top:18px;font-weight:800}
+.feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+.primary{border:0;background:var(--accent);color:#151515;border-radius:14px;padding:14px 22px;font-weight:900;cursor:pointer}
+.primary:hover{filter:brightness(1.06)}
+.center{text-align:center}
+.score{font-size:clamp(48px,10vw,84px);font-weight:1000;color:var(--accent);margin:10px 0}
+.rank{font-size:24px;font-weight:900;margin-bottom:12px}
+.note{color:var(--muted);line-height:1.7}
+.footer{margin-top:18px;color:#7f91ad;font-size:12px;text-align:center}
+.hidden{display:none}
+@media(max-width:520px){.app{padding-top:18px}.card{border-radius:16px;padding:18px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand">HUNTER×HUNTER QUIZ</div>
+  <div class="sub">100問の問題プールから、毎回ランダムで10問出題</div>
+
+  <section id="start" class="card center">
+    <h1>ハンター知識を試せ</h1>
+    <p class="note">4択・全10問。問題と選択肢は毎回ランダムです。<br>原作・アニメのネタバレを含みます。</p>
+    <button class="primary" id="startBtn">クイズ開始</button>
+  </section>
+
+  <section id="quiz" class="card hidden">
+    <div class="topbar">
+      <div class="badge" id="counter">第1問 / 10問</div>
+      <div class="badge" id="scoreMini">正解 0</div>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+    <h1 id="question"></h1>
+    <div id="answers" class="answers"></div>
+    <div id="feedback" class="feedback"></div>
+    <button class="primary hidden" id="nextBtn">次の問題へ</button>
+  </section>
+
+  <section id="result" class="card center hidden">
+    <div class="note">最終結果</div>
+    <div class="score" id="finalScore">0 / 10</div>
+    <div class="rank" id="rank"></div>
+    <p class="note" id="comment"></p>
+    <button class="primary" id="retryBtn">別の10問に挑戦</button>
+  </section>
+  <div class="footer">非公式ファンメイドクイズ。作品画像・音声は使用していません。</div>
+</div>
+
+<script>
+const QUESTION_POOL = [{"q": "ゴン＝フリークスの父親は誰？", "a": "ジン＝フリークス", "c": ["シルバ＝ゾルディック", "カイト", "アイザック＝ネテロ"]}, {"q": "ゴンが育った島の名前は？", "a": "くじら島", "c": ["軍艦島", "流星街", "ドーレ港"]}, {"q": "ゴンが最初に目指した資格は？", "a": "ハンターライセンス", "c": ["プロ格闘家資格", "船舶免許", "医師免許"]}, {"q": "ゴンがハンターを目指すきっかけを作った人物は？", "a": "カイト", "c": ["レオリオ", "ヒソカ", "ウイング"]}, {"q": "キルアの出身家系は？", "a": "ゾルディック家", "c": ["ノストラード家", "フリークス家", "クルタ族"]}, {"q": "キルアの家がある山の名前は？", "a": "ククルーマウンテン", "c": ["枯枯戮山", "パドキア山", "トリックタワー"]}, {"q": "クラピカが属していた一族は？", "a": "クルタ族", "c": ["ゾルディック家", "キメラアント", "流星街の住民"]}, {"q": "クルタ族が感情を高ぶらせたときに変化するものは？", "a": "瞳が緋色になる", "c": ["髪が白くなる", "声が出なくなる", "体が透明になる"]}, {"q": "レオリオが目指している職業は？", "a": "医者", "c": ["賞金首ハンター", "考古学者", "料理人"]}, {"q": "第287期ハンター試験で最終的に合格した人数は？", "a": "7人", "c": ["5人", "8人", "9人"]}, {"q": "ハンター試験の第一次試験で受験者を案内した試験官は？", "a": "サトツ", "c": ["メンチ", "ブハラ", "リッポー"]}, {"q": "ハンター試験の第二次試験で美食ハンターとして登場した女性試験官は？", "a": "メンチ", "c": ["マチ", "ビスケ", "パーム"]}, {"q": "第二次試験でブハラが課題にした料理の材料は？", "a": "グレイトスタンプ", "c": ["ヌメーレ湿原の魚", "クモワシの卵", "人面猿"]}, {"q": "ハンター試験第三次試験の舞台は？", "a": "トリックタワー", "c": ["天空闘技場", "グリードアイランド", "枯枯戮山"]}, {"q": "多数決の道でゴンたちと行動した受験者は？", "a": "トンパ", "c": ["ポックル", "ハンゾー", "ボドロ"]}, {"q": "ハンター試験第四次試験の舞台となった島は？", "a": "ゼビル島", "c": ["くじら島", "グリードアイランド", "軍艦島"]}, {"q": "第四次試験でゴンが狙うことになったプレート番号は？", "a": "44番", "c": ["99番", "301番", "405番"]}, {"q": "ヒソカの受験番号は？", "a": "44番", "c": ["99番", "301番", "405番"]}, {"q": "キルアの受験番号は？", "a": "99番", "c": ["44番", "301番", "403番"]}, {"q": "ゴンの受験番号は？", "a": "405番", "c": ["404番", "403番", "406番"]}, {"q": "最終試験でゴンと対戦した忍者は？", "a": "ハンゾー", "c": ["ギタラクル", "ポックル", "ボドロ"]}, {"q": "第287期ハンター試験で唯一不合格になった人物は？", "a": "キルア", "c": ["ゴン", "レオリオ", "クラピカ"]}, {"q": "キルアを失格に追い込んだ人物の正体は？", "a": "イルミ＝ゾルディック", "c": ["ミルキ＝ゾルディック", "ヒソカ", "カルト＝ゾルディック"]}, {"q": "ゾルディック家の正門は一般に何と呼ばれる？", "a": "試しの門", "c": ["黄泉の門", "審判の門", "暗黒の門"]}, {"q": "ゾルディック家の番犬の名前は？", "a": "ミケ", "c": ["コムギ", "ピトー", "カナリア"]}, {"q": "ゾルディック家の執事見習いで、ゴンたちを止めた少女は？", "a": "カナリア", "c": ["アマネ", "ツボネ", "アルカ"]}, {"q": "キルアの母親の名前は？", "a": "キキョウ", "c": ["シルバ", "ツボネ", "ミト"]}, {"q": "キルアの父親の名前は？", "a": "シルバ", "c": ["ゼノ", "ミルキ", "イルミ"]}, {"q": "キルアの祖父の名前は？", "a": "ゼノ", "c": ["マハ", "シルバ", "ゴトー"]}, {"q": "キルアの兄で針を使う人物は？", "a": "イルミ", "c": ["ミルキ", "カルト", "アルカ"]}, {"q": "天空闘技場でゴンとキルアに念を教えた人物は？", "a": "ウイング", "c": ["ズシ", "ビスケ", "モラウ"]}, {"q": "ウイングの弟子の少年は？", "a": "ズシ", "c": ["ゼパイル", "カルト", "コルトピ"]}, {"q": "天空闘技場で念能力者同士の戦いが始まる階は？", "a": "200階", "c": ["100階", "150階", "250階"]}, {"q": "念の四大行に含まれないものは？", "a": "円", "c": ["纏", "絶", "練"]}, {"q": "念の基本技術でオーラを体に留めるものは？", "a": "纏", "c": ["絶", "発", "凝"]}, {"q": "気配とオーラを断つ技術は？", "a": "絶", "c": ["纏", "練", "周"]}, {"q": "通常以上のオーラを生み出す技術は？", "a": "練", "c": ["絶", "隠", "硬"]}, {"q": "個人ごとの念能力を表す技術は？", "a": "発", "c": ["纏", "凝", "流"]}, {"q": "ゴンの念系統は？", "a": "強化系", "c": ["変化系", "具現化系", "特質系"]}, {"q": "キルアの念系統は？", "a": "変化系", "c": ["放出系", "操作系", "強化系"]}, {"q": "クラピカの通常時の念系統は？", "a": "具現化系", "c": ["特質系", "操作系", "放出系"]}, {"q": "ヒソカの念系統は？", "a": "変化系", "c": ["強化系", "具現化系", "操作系"]}, {"q": "ヒソカの『伸縮自在の愛』の別名は？", "a": "バンジーガム", "c": ["ドッキリテクスチャー", "スキルハンター", "ブラックボイス"]}, {"q": "バンジーガムが持つ性質は？", "a": "ゴムとガム", "c": ["炎と氷", "鉄と磁石", "水と電気"]}, {"q": "ヒソカの薄っぺらな嘘の別名は？", "a": "ドッキリテクスチャー", "c": ["バンジーガム", "ギャラリーフェイク", "ラブリーゴーストライター"]}, {"q": "カストロの分身能力は通称何と呼ばれる？", "a": "ダブル", "c": ["サテライト", "コピー", "クローン"]}, {"q": "ゴンがヒソカに返そうとしていたものは？", "a": "44番のプレート", "c": ["ハンターライセンス", "トランプ", "指輪"]}, {"q": "クラピカが幻影旅団に対して課した制約に関係する指は？", "a": "中指", "c": ["親指", "人差し指", "小指"]}, {"q": "クラピカの『束縛する中指の鎖』の通称は？", "a": "チェーンジェイル", "c": ["ジャッジメントチェーン", "ホーリーチェーン", "ダウジングチェーン"]}, {"q": "クラピカが緋の眼のときに発動する特質系能力は？", "a": "絶対時間", "c": ["神速", "盗賊の極意", "天上不知唯我独損"]}, {"q": "幻影旅団の団長は？", "a": "クロロ＝ルシルフル", "c": ["フェイタン", "ノブナガ", "フランクリン"]}, {"q": "幻影旅団の団員番号4として登場した人物は？", "a": "ヒソカ", "c": ["ウボォーギン", "シャルナーク", "パクノダ"]}, {"q": "幻影旅団が出身母体としている場所は？", "a": "流星街", "c": ["くじら島", "NGL", "東ゴルトー共和国"]}, {"q": "幻影旅団のシンボルは？", "a": "12本脚の蜘蛛", "c": ["翼のある獅子", "三つ目の蛇", "黒い龍"]}, {"q": "ウボォーギンの念系統は？", "a": "強化系", "c": ["操作系", "具現化系", "特質系"]}, {"q": "ウボォーギンの必殺技は？", "a": "超破壊拳", "c": ["廻天", "神速", "許されざる者"]}, {"q": "ノブナガが得意とする武器は？", "a": "日本刀", "c": ["槍", "銃", "鞭"]}, {"q": "マチの念能力で主に使われるものは？", "a": "念糸", "c": ["煙", "紙吹雪", "毒針"]}, {"q": "シャルナークの操作系能力で使う道具は？", "a": "携帯電話とアンテナ", "c": ["トランプと糸", "笛と鎖", "コインと銃"]}, {"q": "フランクリンの念弾は主にどこから放たれる？", "a": "指先", "c": ["口", "目", "足裏"]}, {"q": "シズクが使う掃除機の名前は？", "a": "デメちゃん", "c": ["クロスケ", "ブライス", "ポットクリン"]}, {"q": "コルトピの能力は？", "a": "触れた物体の複製", "c": ["他人の記憶を読む", "未来を予知する", "死体を操る"]}, {"q": "パクノダの能力で読み取れるものは？", "a": "記憶", "c": ["寿命", "未来", "念系統"]}, {"q": "ヨークシンシティ編でクラピカが所属した組織は？", "a": "ノストラードファミリー", "c": ["ハンター協会十二支ん", "陰獣", "ゾルディック家"]}, {"q": "ネオン＝ノストラードの能力は？", "a": "自動書記による予知", "c": ["治療", "瞬間移動", "記憶消去"]}, {"q": "ネオンの予知能力の通称は？", "a": "天使の自動筆記", "c": ["密室遊魚", "携帯する他人の運命", "不思議で便利な大風呂敷"]}, {"q": "マフィアンコミュニティが雇った戦闘集団は？", "a": "陰獣", "c": ["十二支ん", "清凛隊", "ハンター十カ条委員会"]}, {"q": "陰獣の一員で地中を自在に移動する人物は？", "a": "蚯蚓", "c": ["病犬", "蛭", "豪猪"]}, {"q": "グリードアイランドを制作した中心人物の一人は？", "a": "ジン＝フリークス", "c": ["ネテロ", "クロロ", "パリストン"]}, {"q": "グリードアイランドに入るために必要なゲーム機は？", "a": "ジョイステーション", "c": ["スワンクリスタル", "メモリーカード", "ハンターギア"]}, {"q": "グリードアイランドでゴンとキルアを鍛えた人物は？", "a": "ビスケット＝クルーガー", "c": ["パーム＝シベリア", "メンチ", "ミト"]}, {"q": "ビスケの本来の姿は？", "a": "筋骨隆々の大柄な女性", "c": ["幼い少女のまま", "老婆", "男性"]}, {"q": "ビスケの念系統は？", "a": "変化系", "c": ["特質系", "放出系", "操作系"]}, {"q": "グリードアイランドで大量のプレイヤーを殺害した集団の通称は？", "a": "爆弾魔", "c": ["陰獣", "清凛隊", "蜘蛛"]}, {"q": "爆弾魔のリーダー格は？", "a": "ゲンスルー", "c": ["サブ", "バラ", "レイザー"]}, {"q": "ゲンスルーの能力『一握りの火薬』の通称は？", "a": "リトルフラワー", "c": ["カウントダウン", "レイザーボール", "スクリーム"]}, {"q": "指定ポケットカードを使った最終イベントで戦う相手は？", "a": "レイザー", "c": ["ゲンスルー", "クロロ", "ビノールト"]}, {"q": "レイザーが担当していた競技は？", "a": "ドッジボール", "c": ["サッカー", "野球", "相撲"]}, {"q": "ゴンの必殺技の名称は？", "a": "ジャジャン拳", "c": ["百式観音", "廻天", "虎咬拳"]}, {"q": "ジャジャン拳の『グー』は主に何系の技？", "a": "強化系", "c": ["放出系", "変化系", "操作系"]}, {"q": "ジャジャン拳の『パー』は主に何系の技？", "a": "放出系", "c": ["具現化系", "特質系", "強化系"]}, {"q": "ジャジャン拳の『チー』は主に何系の技？", "a": "変化系", "c": ["操作系", "放出系", "具現化系"]}, {"q": "キメラアント編の舞台の一つとなる自然保護国家は？", "a": "NGL自治国", "c": ["東ゴルトー共和国", "カキン帝国", "ヨークシン共和国"]}, {"q": "キメラアントの王の名前は？", "a": "メルエム", "c": ["モントゥトゥユピー", "シャウアプフ", "レオル"]}, {"q": "王直属護衛軍の一人で猫のような外見を持つ者は？", "a": "ネフェルピトー", "c": ["シャウアプフ", "モントゥトゥユピー", "メレオロン"]}, {"q": "王直属護衛軍の一人で蝶のような羽を持つ者は？", "a": "シャウアプフ", "c": ["ネフェルピトー", "モントゥトゥユピー", "ザザン"]}, {"q": "王直属護衛軍の一人で肉体変形を得意とする者は？", "a": "モントゥトゥユピー", "c": ["コルト", "イカルゴ", "ウェルフィン"]}, {"q": "メルエムがコムギと打っていた盤上競技は？", "a": "軍儀", "c": ["将棋", "囲碁", "チェス"]}, {"q": "コムギが世界王者である競技は？", "a": "軍儀", "c": ["麻雀", "チェス", "将棋"]}, {"q": "ネフェルピトーの治療能力の通称は？", "a": "玩具修理者", "c": ["黒子舞想", "麟粉乃愛泉", "監獄ロック"]}, {"q": "モラウが武器として使うものは？", "a": "巨大なキセル", "c": ["日本刀", "弓矢", "鎖鎌"]}, {"q": "モラウの念能力で作り出すものは？", "a": "煙", "c": ["氷", "砂", "紙"]}, {"q": "ノヴの能力で作られる異空間マンションの通称は？", "a": "4次元マンション", "c": ["密室遊魚", "ハイドアンドシーク", "ワープハウス"]}, {"q": "ナックルの能力で相手に取り付くマスコットは？", "a": "ポットクリン", "c": ["デメちゃん", "ブライス", "ミケ"]}, {"q": "シュートの能力名は？", "a": "暗い宿", "c": ["天上不知唯我独損", "神の不在証明", "蠅の王"]}, {"q": "メレオロンの能力『神の不在証明』で起こることは？", "a": "触れている相手ごと認識されなくなる", "c": ["未来が見える", "相手の能力を盗む", "時間が止まる"]}, {"q": "イカルゴが本来なりたかった生物は？", "a": "イカ", "c": ["タコ", "クラゲ", "カニ"]}, {"q": "ネテロ会長の念能力は？", "a": "百式観音", "c": ["盗賊の極意", "神速", "紫煙拳"]}, {"q": "ネテロがメルエムとの戦いで最後に使った爆弾は？", "a": "貧者の薔薇", "c": ["ミニチュアローズ", "一握りの火薬", "超破壊拳"]}, {"q": "キルアの能力『神速』の読みは？", "a": "カンムル", "c": ["ナルカミ", "シップウジンライ", "イズツシ"]}];
+const QUIZ_LENGTH = 10;
+let quiz=[], index=0, score=0, locked=false;
+
+const $ = s => document.querySelector(s);
+const shuffle = arr => {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+  return a;
+};
+
+function startQuiz(){
+  quiz=shuffle(QUESTION_POOL).slice(0,QUIZ_LENGTH);
+  index=0; score=0;
+  $("#start").classList.add("hidden");
+  $("#result").classList.add("hidden");
+  $("#quiz").classList.remove("hidden");
+  renderQuestion();
+}
+
+function renderQuestion(){
+  locked=false;
+  const item=quiz[index];
+  $("#counter").textContent=`第${index+1}問 / ${QUIZ_LENGTH}問`;
+  $("#scoreMini").textContent=`正解 ${score}`;
+  $("#bar").style.width=`${(index/QUIZ_LENGTH)*100}%`;
+  $("#question").textContent=item.q;
+  $("#feedback").textContent="";
+  $("#feedback").className="feedback";
+  $("#nextBtn").classList.add("hidden");
+  const choices=shuffle([item.a,...item.c]);
+  const box=$("#answers"); box.innerHTML="";
+  choices.forEach(text=>{
+    const btn=document.createElement("button");
+    btn.className="choice";
+    btn.textContent=text;
+    btn.onclick=()=>answer(btn,text,item.a);
+    box.appendChild(btn);
+  });
+}
+
+function answer(btn,selected,correct){
+  if(locked)return;
+  locked=true;
+  const buttons=[...document.querySelectorAll(".choice")];
+  buttons.forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===correct)b.classList.add("correct");
+  });
+  if(selected===correct){
+    score++;
+    $("#feedback").textContent="正解！";
+    $("#feedback").classList.add("good");
+  }else{
+    btn.classList.add("wrong");
+    $("#feedback").textContent=`不正解。正解は「${correct}」`;
+    $("#feedback").classList.add("bad");
+  }
+  $("#scoreMini").textContent=`正解 ${score}`;
+  $("#nextBtn").textContent=index===QUIZ_LENGTH-1?"結果を見る":"次の問題へ";
+  $("#nextBtn").classList.remove("hidden");
+}
+
+function next(){
+  index++;
+  if(index>=QUIZ_LENGTH)showResult(); else renderQuestion();
+}
+
+function showResult(){
+  $("#quiz").classList.add("hidden");
+  $("#result").classList.remove("hidden");
+  $("#finalScore").textContent=`${score} / ${QUIZ_LENGTH}`;
+  let rank,comment;
+  if(score===10){rank="三ツ星ハンター級";comment="全問正解。相当な知識量です。";}
+  else if(score>=8){rank="一流ハンター級";comment="かなり詳しいです。あと少しで完全制覇。";}
+  else if(score>=6){rank="プロハンター級";comment="十分な実力。別の10問にも挑戦してください。";}
+  else if(score>=4){rank="ハンター試験受験者級";comment="基礎知識はあります。再挑戦で伸ばせます。";}
+  else{rank="ルーキー級";comment="まずは物語を振り返ってから再挑戦。";}
+  $("#rank").textContent=rank;
+  $("#comment").textContent=comment;
+}
+
+$("#startBtn").onclick=startQuiz;
+$("#retryBtn").onclick=startQuiz;
+$("#nextBtn").onclick=next;
+</script>
+</body>
+</html>
