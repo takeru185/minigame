@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>鬼滅の刃 4択クイズ</title>
+<style>
+:root {
+ --bg:#15090b;--panel:#251215;--panel2:#351a1f;--text:#fff7f2;--muted:#d5b8b8;
+ --accent:#e55b54;--accent2:#f0b64f;--good:#55d98d;--bad:#ff7777;--line:#5a3035;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+background:radial-gradient(circle at top,#4b2025 0,#15090b 48%);color:var(--text)}
+.app{width:min(760px,92vw);margin:0 auto;padding:30px 0 50px}
+.brand{font-size:clamp(24px,4.2vw,36px);font-weight:1000;letter-spacing:.08em;color:var(--accent2)}
+.sub{margin-top:6px;color:var(--muted)}
+.card{margin-top:24px;background:rgba(37,18,21,.96);border:1px solid var(--line);border-radius:20px;
+padding:clamp(20px,4vw,34px);box-shadow:0 18px 60px rgba(0,0,0,.38)}
+.center{text-align:center} .hidden{display:none}
+.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}
+.badge{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-weight:800}
+.progress{height:10px;background:#100608;border-radius:999px;overflow:hidden;margin:14px 0 26px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s}
+h1{font-size:clamp(22px,3.6vw,32px);line-height:1.45;margin:0 0 24px}
+.answers{display:grid;gap:12px}
+button{font:inherit}
+.choice{width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:16px 18px;
+border-radius:14px;text-align:left;cursor:pointer;font-weight:800;transition:.18s}
+.choice:hover{transform:translateY(-1px);border-color:#96606a}
+.choice.correct{background:rgba(85,217,141,.14);border-color:var(--good)}
+.choice.wrong{background:rgba(255,119,119,.14);border-color:var(--bad)}
+.choice:disabled{cursor:default;transform:none}
+.feedback{min-height:28px;margin-top:18px;font-weight:900}
+.feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+.primary{border:0;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#210b0d;border-radius:14px;
+padding:14px 22px;font-weight:1000;cursor:pointer}
+.primary:hover{filter:brightness(1.05)}
+.score{font-size:clamp(48px,10vw,84px);font-weight:1000;color:var(--accent2);margin:10px 0}
+.rank{font-size:24px;font-weight:1000;margin-bottom:12px}
+.note{color:var(--muted);line-height:1.7}
+.footer{margin-top:18px;text-align:center;color:#a48787;font-size:12px}
+@media(max-width:520px){.app{padding-top:18px}.card{padding:18px;border-radius:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+ <div class="brand">鬼滅の刃 QUIZ</div>
+ <div class="sub">100問の問題プールから、毎回ランダムで10問出題</div>
+
+ <section id="start" class="card center">
+  <h1>鬼殺隊の知識を試せ</h1>
+  <p class="note">4択・全10問。問題と選択肢は毎回ランダムです。<br>原作最終盤までのネタバレを含みます。</p>
+  <button class="primary" id="startBtn">クイズ開始</button>
+ </section>
+
+ <section id="quiz" class="card hidden">
+  <div class="topbar">
+   <div class="badge" id="counter">第1問 / 10問</div>
+   <div class="badge" id="scoreMini">正解 0</div>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <h1 id="question"></h1>
+  <div id="answers" class="answers"></div>
+  <div id="feedback" class="feedback"></div>
+  <button class="primary hidden" id="nextBtn">次の問題へ</button>
+ </section>
+
+ <section id="result" class="card center hidden">
+  <div class="note">最終結果</div>
+  <div class="score" id="finalScore">0 / 10</div>
+  <div class="rank" id="rank"></div>
+  <p class="note" id="comment"></p>
+  <button class="primary" id="retryBtn">別の10問に挑戦</button>
+ </section>
+
+ <div class="footer">非公式ファンメイドクイズ。作品画像・音声は使用していません。</div>
+</div>
+
+<script>
+const QUESTION_POOL=[{"q": "主人公・竈門炭治郎の妹は誰？", "a": "竈門禰豆子", "c": ["栗花落カナヲ", "胡蝶しのぶ", "甘露寺蜜璃"]}, {"q": "炭治郎の家族を襲った鬼は誰？", "a": "鬼舞辻無惨", "c": ["猗窩座", "童磨", "黒死牟"]}, {"q": "禰豆子が鬼になった原因は？", "a": "鬼舞辻無惨の血", "c": ["青い彼岸花", "上弦の鬼の毒", "鬼殺隊の薬"]}, {"q": "炭治郎が最初に出会った鬼殺隊士は？", "a": "冨岡義勇", "c": ["煉獄杏寿郎", "宇髄天元", "悲鳴嶼行冥"]}, {"q": "炭治郎の育手は誰？", "a": "鱗滝左近次", "c": ["桑島慈悟郎", "胡蝶カナエ", "産屋敷耀哉"]}, {"q": "炭治郎が修行した山は？", "a": "狭霧山", "c": ["藤襲山", "雲取山", "那田蜘蛛山"]}, {"q": "最終選別が行われる山は？", "a": "藤襲山", "c": ["狭霧山", "雲取山", "刀鍛冶の里"]}, {"q": "最終選別の期間は何日間？", "a": "7日間", "c": ["3日間", "5日間", "10日間"]}, {"q": "鬼が嫌う花は？", "a": "藤の花", "c": ["彼岸花", "桜", "梅"]}, {"q": "炭治郎の鎹鴉の名前は？", "a": "天王寺松衛門", "c": ["チュン太郎", "銀子", "どんぐり丸"]}, {"q": "我妻善逸の呼吸は？", "a": "雷の呼吸", "c": ["風の呼吸", "炎の呼吸", "音の呼吸"]}, {"q": "嘴平伊之助の呼吸は？", "a": "獣の呼吸", "c": ["岩の呼吸", "蛇の呼吸", "霞の呼吸"]}, {"q": "善逸が眠るとどうなる？", "a": "本来の実力を発揮する", "c": ["鬼になる", "記憶を失う", "呼吸が使えなくなる"]}, {"q": "善逸の雀の名前は？", "a": "チュン太郎", "c": ["松衛門", "銀子", "ムキムキねずみ"]}, {"q": "伊之助が被っているものは？", "a": "猪の頭", "c": ["熊の頭", "狼の頭", "鹿の頭"]}, {"q": "伊之助が育った場所は？", "a": "山", "c": ["遊郭", "刀鍛冶の里", "浅草"]}, {"q": "炭治郎が使う水の呼吸の型のひとつは？", "a": "水面斬り", "c": ["霹靂一閃", "炎虎", "蛇行斬り"]}, {"q": "炭治郎の額の痣は物語序盤では何が原因？", "a": "弟をかばった火傷", "c": ["無惨につけられた傷", "最終選別での傷", "生まれつきの痣"]}, {"q": "炭治郎の嗅覚の特徴は？", "a": "非常に鋭い", "c": ["鬼にだけ反応する", "未来を嗅ぎ取る", "感情を完全に読める"]}, {"q": "禰豆子が入っている箱を作ったのは誰？", "a": "鱗滝左近次", "c": ["鋼鐵塚蛍", "冨岡義勇", "珠世"]}, {"q": "鬼殺隊の当主は誰？", "a": "産屋敷耀哉", "c": ["産屋敷輝利哉", "鬼舞辻無惨", "鱗滝左近次"]}, {"q": "鬼殺隊最高位の剣士たちの総称は？", "a": "柱", "c": ["継子", "甲", "隠"]}, {"q": "水柱は誰？", "a": "冨岡義勇", "c": ["時透無一郎", "不死川実弥", "伊黒小芭内"]}, {"q": "蟲柱は誰？", "a": "胡蝶しのぶ", "c": ["胡蝶カナエ", "栗花落カナヲ", "甘露寺蜜璃"]}, {"q": "炎柱は誰？", "a": "煉獄杏寿郎", "c": ["煉獄槇寿郎", "宇髄天元", "悲鳴嶼行冥"]}, {"q": "音柱は誰？", "a": "宇髄天元", "c": ["我妻善逸", "嘴平伊之助", "伊黒小芭内"]}, {"q": "霞柱は誰？", "a": "時透無一郎", "c": ["不死川玄弥", "甘露寺蜜璃", "冨岡義勇"]}, {"q": "恋柱は誰？", "a": "甘露寺蜜璃", "c": ["胡蝶しのぶ", "珠世", "栗花落カナヲ"]}, {"q": "蛇柱は誰？", "a": "伊黒小芭内", "c": ["不死川実弥", "悲鳴嶼行冥", "時透無一郎"]}, {"q": "風柱は誰？", "a": "不死川実弥", "c": ["不死川玄弥", "伊黒小芭内", "冨岡義勇"]}, {"q": "岩柱は誰？", "a": "悲鳴嶼行冥", "c": ["宇髄天元", "煉獄杏寿郎", "時透無一郎"]}, {"q": "胡蝶しのぶが使う呼吸は？", "a": "蟲の呼吸", "c": ["花の呼吸", "恋の呼吸", "水の呼吸"]}, {"q": "甘露寺蜜璃が使う呼吸は？", "a": "恋の呼吸", "c": ["花の呼吸", "音の呼吸", "霞の呼吸"]}, {"q": "伊黒小芭内が使う呼吸は？", "a": "蛇の呼吸", "c": ["風の呼吸", "蟲の呼吸", "獣の呼吸"]}, {"q": "悲鳴嶼行冥の武器は？", "a": "鉄球と斧", "c": ["二刀流", "鎖鎌", "巨大な刀"]}, {"q": "宇髄天元の元の職業は？", "a": "忍", "c": ["刀鍛冶", "僧侶", "医者"]}, {"q": "宇髄天元の妻は何人？", "a": "3人", "c": ["1人", "2人", "4人"]}, {"q": "宇髄天元の妻ではない人物は？", "a": "香奈乎", "c": ["まきを", "須磨", "雛鶴"]}, {"q": "煉獄杏寿郎の口癖として有名なのは？", "a": "うまい！", "c": ["派手だ！", "南無阿弥陀仏", "猪突猛進！"]}, {"q": "煉獄杏寿郎の父は誰？", "a": "煉獄槇寿郎", "c": ["煉獄千寿郎", "産屋敷耀哉", "鱗滝左近次"]}, {"q": "煉獄杏寿郎の弟は誰？", "a": "煉獄千寿郎", "c": ["煉獄槇寿郎", "時透有一郎", "不死川玄弥"]}, {"q": "無限列車で炭治郎たちが戦った下弦の鬼は？", "a": "魘夢", "c": ["累", "響凱", "零余子"]}, {"q": "無限列車で煉獄杏寿郎と戦った上弦の鬼は？", "a": "猗窩座", "c": ["童磨", "黒死牟", "玉壺"]}, {"q": "猗窩座は上弦の何？", "a": "上弦の参", "c": ["上弦の壱", "上弦の弐", "上弦の陸"]}, {"q": "魘夢の能力は？", "a": "夢を操る", "c": ["氷を操る", "壺から鬼を出す", "帯を操る"]}, {"q": "那田蜘蛛山で炭治郎たちが戦った十二鬼月は？", "a": "累", "c": ["魘夢", "妓夫太郎", "半天狗"]}, {"q": "累は下弦の何？", "a": "下弦の伍", "c": ["下弦の壱", "下弦の参", "下弦の陸"]}, {"q": "累が作った家族で母役をしていた鬼は？", "a": "母蜘蛛", "c": ["姉蜘蛛", "父蜘蛛", "妹蜘蛛"]}, {"q": "炭治郎が累との戦いで使った技は？", "a": "ヒノカミ神楽", "c": ["霹靂一閃", "火雷神", "炎の呼吸"]}, {"q": "禰豆子の血鬼術は？", "a": "爆血", "c": ["氷結", "帯操作", "夢操作"]}, {"q": "胡蝶しのぶが鬼に対して使うものは？", "a": "藤の花の毒", "c": ["青い彼岸花の毒", "日輪石の粉", "鬼の血"]}, {"q": "栗花落カナヲの育手にあたる人物は？", "a": "胡蝶カナエと胡蝶しのぶ", "c": ["鱗滝左近次と冨岡義勇", "煉獄槇寿郎と杏寿郎", "宇髄天元とまきを"]}, {"q": "栗花落カナヲが使う呼吸は？", "a": "花の呼吸", "c": ["蟲の呼吸", "水の呼吸", "恋の呼吸"]}, {"q": "カナヲが自分で決められない時に使っていたものは？", "a": "銅貨", "c": ["サイコロ", "花札", "おみくじ"]}, {"q": "不死川玄弥が使えないものは？", "a": "呼吸法", "c": ["鬼の能力", "銃", "日輪刀"]}, {"q": "玄弥の兄は誰？", "a": "不死川実弥", "c": ["時透無一郎", "伊黒小芭内", "悲鳴嶼行冥"]}, {"q": "玄弥の特殊能力は？", "a": "鬼を食べて一時的に鬼の力を得る", "c": ["未来を見る", "他人の呼吸をコピーする", "鬼を人間に戻す"]}, {"q": "鬼殺隊の階級で最上位は？", "a": "甲", "c": ["癸", "丙", "戊"]}, {"q": "鬼殺隊の階級で最下位は？", "a": "癸", "c": ["甲", "乙", "己"]}, {"q": "鬼殺隊の刀は何と呼ばれる？", "a": "日輪刀", "c": ["赫刀", "黒刀", "鬼斬刀"]}, {"q": "炭治郎の日輪刀の色は？", "a": "黒", "c": ["赤", "青", "黄色"]}, {"q": "善逸の日輪刀の色は？", "a": "黄色", "c": ["黒", "白", "桃色"]}, {"q": "伊之助の日輪刀の特徴は？", "a": "刃こぼれした二刀", "c": ["一本の巨大刀", "鞭のような刀", "鎖付きの刀"]}, {"q": "炭治郎の日輪刀を担当する刀鍛冶は？", "a": "鋼鐵塚蛍", "c": ["鉄穴森鋼蔵", "小鉄", "縁壱零式"]}, {"q": "刀鍛冶の里の長は誰？", "a": "鉄地河原鉄珍", "c": ["鋼鐵塚蛍", "鉄穴森鋼蔵", "小鉄"]}, {"q": "刀鍛冶の里で無一郎が訓練した絡繰人形は？", "a": "縁壱零式", "c": ["炭吉零式", "継国零式", "無惨零式"]}, {"q": "縁壱零式の腕は何本？", "a": "6本", "c": ["2本", "4本", "8本"]}, {"q": "刀鍛冶の里を襲撃した上弦の鬼は？", "a": "玉壺と半天狗", "c": ["猗窩座と童磨", "黒死牟と鳴女", "妓夫太郎と堕姫"]}, {"q": "玉壺は上弦の何？", "a": "上弦の伍", "c": ["上弦の肆", "上弦の陸", "上弦の弐"]}, {"q": "半天狗は上弦の何？", "a": "上弦の肆", "c": ["上弦の参", "上弦の伍", "上弦の陸"]}, {"q": "半天狗が分裂した感情の鬼に含まれないものは？", "a": "愛", "c": ["喜", "怒", "哀"]}, {"q": "半天狗の本体の特徴は？", "a": "非常に小さい", "c": ["巨大な体", "透明", "翼がある"]}, {"q": "玉壺の血鬼術の特徴は？", "a": "壺を使う", "c": ["氷を使う", "帯を使う", "夢を使う"]}, {"q": "無一郎が玉壺との戦いで発現したものは？", "a": "痣", "c": ["透き通る世界", "鬼化", "青い彼岸花"]}, {"q": "禰豆子が刀鍛冶の里で克服したものは？", "a": "太陽の光", "c": ["藤の花の毒", "水", "眠り"]}, {"q": "遊郭編の舞台となる場所は？", "a": "吉原遊郭", "c": ["浅草", "那田蜘蛛山", "無限城"]}, {"q": "遊郭に潜伏していた上弦の鬼は？", "a": "妓夫太郎と堕姫", "c": ["玉壺と半天狗", "猗窩座と童磨", "黒死牟と鳴女"]}, {"q": "堕姫の人間時代の名前は？", "a": "梅", "c": ["小梅", "梅子", "花"]}, {"q": "妓夫太郎と堕姫は上弦の何？", "a": "上弦の陸", "c": ["上弦の伍", "上弦の肆", "上弦の参"]}, {"q": "堕姫の血鬼術は？", "a": "帯を操る", "c": ["氷を操る", "壺を操る", "夢を操る"]}, {"q": "妓夫太郎の武器は？", "a": "血の鎌", "c": ["巨大な斧", "扇", "刀"]}, {"q": "妓夫太郎を倒すために必要だった条件は？", "a": "妓夫太郎と堕姫の頸を同時に斬る", "c": ["朝日を浴びせる", "藤の毒を飲ませる", "無惨の血を抜く"]}, {"q": "童磨は上弦の何？", "a": "上弦の弐", "c": ["上弦の壱", "上弦の参", "上弦の肆"]}, {"q": "黒死牟は上弦の何？", "a": "上弦の壱", "c": ["上弦の弐", "上弦の参", "上弦の伍"]}, {"q": "黒死牟の人間時代の名前は？", "a": "継国巌勝", "c": ["継国縁壱", "竈門炭吉", "黒曜丸"]}, {"q": "継国縁壱と黒死牟の関係は？", "a": "双子の兄弟", "c": ["親子", "師弟", "従兄弟"]}, {"q": "日の呼吸の始祖は誰？", "a": "継国縁壱", "c": ["竈門炭吉", "煉獄槇寿郎", "産屋敷耀哉"]}, {"q": "炭治郎の家に伝わる舞は？", "a": "ヒノカミ神楽", "c": ["火之神舞", "日輪神楽", "炎舞"]}, {"q": "炭治郎の耳飾りの柄は？", "a": "花札", "c": ["藤の花", "炎", "市松模様"]}, {"q": "無惨が炭治郎の耳飾りを恐れた理由は？", "a": "縁壱を思い出すため", "c": ["日光を反射するため", "鬼を弱らせるため", "産屋敷家の印だから"]}, {"q": "珠世は何者？", "a": "無惨に反旗を翻す鬼", "c": ["鬼殺隊の柱", "刀鍛冶", "霊媒師"]}, {"q": "珠世と行動を共にする鬼は？", "a": "愈史郎", "c": ["獪岳", "響凱", "村田"]}, {"q": "愈史郎の血鬼術は？", "a": "視覚を操る札", "c": ["氷を操る扇", "夢を操る血", "帯を操る"]}, {"q": "珠世が研究していたことは？", "a": "鬼を人間に戻す薬", "c": ["新しい呼吸法", "日輪刀の強化", "青い彼岸花の栽培"]}, {"q": "浅草で炭治郎が初めて対面した人物は？", "a": "鬼舞辻無惨", "c": ["猗窩座", "珠世", "童磨"]}, {"q": "無惨が浅草で連れていたのは？", "a": "人間の妻と娘", "c": ["鬼の部下", "産屋敷の使者", "刀鍛冶"]}, {"q": "響凱が使うものは？", "a": "鼓", "c": ["琵琶", "笛", "三味線"]}, {"q": "響凱の屋敷の特徴は？", "a": "鼓を叩くと部屋が回転する", "c": ["時間が止まる", "夢の中に入る", "無限に広がる"]}, {"q": "無限城を操る鬼は？", "a": "鳴女", "c": ["珠世", "堕姫", "零余子"]}, {"q": "鳴女が使う楽器は？", "a": "琵琶", "c": ["琴", "鼓", "笛"]}];
+const QUIZ_LENGTH=10;
+let quiz=[],index=0,score=0,locked=false;
+const $=s=>document.querySelector(s);
+const shuffle=arr=>{
+ const a=[...arr];
+ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+ return a;
+};
+function startQuiz(){
+ quiz=shuffle(QUESTION_POOL).slice(0,QUIZ_LENGTH);
+ index=0;score=0;
+ $("#start").classList.add("hidden");
+ $("#result").classList.add("hidden");
+ $("#quiz").classList.remove("hidden");
+ renderQuestion();
+}
+function renderQuestion(){
+ locked=false;
+ const item=quiz[index];
+ $("#counter").textContent=`第${index+1}問 / ${QUIZ_LENGTH}問`;
+ $("#scoreMini").textContent=`正解 ${score}`;
+ $("#bar").style.width=`${index/QUIZ_LENGTH*100}%`;
+ $("#question").textContent=item.q;
+ $("#feedback").textContent="";
+ $("#feedback").className="feedback";
+ $("#nextBtn").classList.add("hidden");
+ const box=$("#answers");box.innerHTML="";
+ shuffle([item.a,...item.c]).forEach(text=>{
+  const b=document.createElement("button");
+  b.className="choice";b.textContent=text;
+  b.onclick=()=>answer(b,text,item.a);
+  box.appendChild(b);
+ });
+}
+function answer(btn,selected,correct){
+ if(locked)return;
+ locked=true;
+ [...document.querySelectorAll(".choice")].forEach(b=>{
+  b.disabled=true;
+  if(b.textContent===correct)b.classList.add("correct");
+ });
+ if(selected===correct){
+  score++;$("#feedback").textContent="正解！";$("#feedback").classList.add("good");
+ }else{
+  btn.classList.add("wrong");
+  $("#feedback").textContent=`不正解。正解は「${correct}」`;
+  $("#feedback").classList.add("bad");
+ }
+ $("#scoreMini").textContent=`正解 ${score}`;
+ $("#nextBtn").textContent=index===QUIZ_LENGTH-1?"結果を見る":"次の問題へ";
+ $("#nextBtn").classList.remove("hidden");
+}
+function next(){
+ index++;
+ if(index>=QUIZ_LENGTH)showResult();else renderQuestion();
+}
+function showResult(){
+ $("#quiz").classList.add("hidden");
+ $("#result").classList.remove("hidden");
+ $("#finalScore").textContent=`${score} / ${QUIZ_LENGTH}`;
+ let rank,comment;
+ if(score===10){rank="柱クラス";comment="全問正解。鬼殺隊最高峰の知識です。";}
+ else if(score>=8){rank="甲クラス";comment="かなり詳しいです。あと少しで柱級。";}
+ else if(score>=6){rank="継子クラス";comment="十分な実力。別の10問にも挑戦してください。";}
+ else if(score>=4){rank="鬼殺隊士クラス";comment="基礎知識はあります。再挑戦で伸ばせます。";}
+ else{rank="最終選別挑戦者";comment="物語を振り返ってから再挑戦。";}
+ $("#rank").textContent=rank;
+ $("#comment").textContent=comment;
+}
+$("#startBtn").onclick=startQuiz;
+$("#retryBtn").onclick=startQuiz;
+$("#nextBtn").onclick=next;
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>幽☆遊☆白書 4択クイズ</title>
+<style>
+:root {
+ --bg:#07151a;--panel:#10242b;--panel2:#17333c;--text:#f3fbfc;--muted:#a8c0c5;
+ --accent:#66e08b;--accent2:#65b7ff;--good:#55d98d;--bad:#ff6f73;--line:#2d4b54;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+background:radial-gradient(circle at top,#153c45 0,#07151a 48%);color:var(--text)}
+.app{width:min(760px,92vw);margin:0 auto;padding:30px 0 50px}
+.brand{font-size:clamp(24px,4.2vw,36px);font-weight:1000;letter-spacing:.06em;color:var(--accent)}
+.sub{margin-top:6px;color:var(--muted)}
+.card{margin-top:24px;background:rgba(16,36,43,.95);border:1px solid var(--line);border-radius:20px;
+padding:clamp(20px,4vw,34px);box-shadow:0 18px 60px rgba(0,0,0,.35)}
+.center{text-align:center} .hidden{display:none}
+.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}
+.badge{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-weight:800}
+.progress{height:10px;background:#061015;border-radius:999px;overflow:hidden;margin:14px 0 26px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s}
+h1{font-size:clamp(22px,3.6vw,32px);line-height:1.45;margin:0 0 24px}
+.answers{display:grid;gap:12px}
+button{font:inherit}
+.choice{width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:16px 18px;
+border-radius:14px;text-align:left;cursor:pointer;font-weight:800;transition:.18s}
+.choice:hover{transform:translateY(-1px);border-color:#6a9ba8}
+.choice.correct{background:rgba(85,217,141,.14);border-color:var(--good)}
+.choice.wrong{background:rgba(255,111,115,.14);border-color:var(--bad)}
+.choice:disabled{cursor:default;transform:none}
+.feedback{min-height:28px;margin-top:18px;font-weight:900}
+.feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+.primary{border:0;background:linear-gradient(90deg,var(--accent),#9bf3b5);color:#072014;border-radius:14px;
+padding:14px 22px;font-weight:1000;cursor:pointer}
+.primary:hover{filter:brightness(1.05)}
+.score{font-size:clamp(48px,10vw,84px);font-weight:1000;color:var(--accent);margin:10px 0}
+.rank{font-size:24px;font-weight:1000;margin-bottom:12px}
+.note{color:var(--muted);line-height:1.7}
+.footer{margin-top:18px;text-align:center;color:#7d999f;font-size:12px}
+@media(max-width:520px){.app{padding-top:18px}.card{padding:18px;border-radius:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+ <div class="brand">幽☆遊☆白書 QUIZ</div>
+ <div class="sub">100問の問題プールから、毎回ランダムで10問出題</div>
+
+ <section id="start" class="card center">
+  <h1>霊界探偵の知識を試せ</h1>
+  <p class="note">4択・全10問。問題と選択肢は毎回ランダムです。<br>原作・アニメ終盤までのネタバレを含みます。</p>
+  <button class="primary" id="startBtn">クイズ開始</button>
+ </section>
+
+ <section id="quiz" class="card hidden">
+  <div class="topbar">
+   <div class="badge" id="counter">第1問 / 10問</div>
+   <div class="badge" id="scoreMini">正解 0</div>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <h1 id="question"></h1>
+  <div id="answers" class="answers"></div>
+  <div id="feedback" class="feedback"></div>
+  <button class="primary hidden" id="nextBtn">次の問題へ</button>
+ </section>
+
+ <section id="result" class="card center hidden">
+  <div class="note">最終結果</div>
+  <div class="score" id="finalScore">0 / 10</div>
+  <div class="rank" id="rank"></div>
+  <p class="note" id="comment"></p>
+  <button class="primary" id="retryBtn">別の10問に挑戦</button>
+ </section>
+
+ <div class="footer">非公式ファンメイドクイズ。作品画像・音声は使用していません。</div>
+</div>
+
+<script>
+const QUESTION_POOL=[{"q": "浦飯幽助が物語の冒頭で助けたのは誰？", "a": "車にひかれそうになった子ども", "c": ["迷子の犬", "溺れていた女性", "不良に絡まれた老人"]}, {"q": "浦飯幽助の職業は物語開始時点で何？", "a": "中学生", "c": ["高校生", "大学生", "会社員"]}, {"q": "幽助を霊界へ案内した人物は？", "a": "ぼたん", "c": ["雪菜", "幻海", "静流"]}, {"q": "幽助の幼なじみは誰？", "a": "雪村螢子", "c": ["雪菜", "ぼたん", "樹里"]}, {"q": "幽助のライバルであり仲間となる人物は？", "a": "桑原和真", "c": ["戸愚呂弟", "仙水忍", "左京"]}, {"q": "桑原の姉の名前は？", "a": "桑原静流", "c": ["桑原螢子", "桑原雪菜", "桑原樹里"]}, {"q": "幽助が任命された役職は？", "a": "霊界探偵", "c": ["魔界探偵", "妖怪刑事", "霊界武術家"]}, {"q": "霊界を統治する人物は？", "a": "コエンマ", "c": ["閻魔大王", "雷禅", "黄泉"]}, {"q": "コエンマが普段くわえているものは？", "a": "おしゃぶり", "c": ["葉巻", "笛", "数珠"]}, {"q": "ぼたんの移動手段は？", "a": "オール", "c": ["ほうき", "雲", "バイク"]}, {"q": "蔵馬の人間界での名前は？", "a": "南野秀一", "c": ["南野修一", "北野秀一", "南野英一"]}, {"q": "飛影の特徴的な第三の目は何と呼ばれる？", "a": "邪眼", "c": ["魔眼", "霊眼", "妖眼"]}, {"q": "飛影の必殺技は？", "a": "邪王炎殺黒龍波", "c": ["霊丸", "次元刀", "薔薇棘鞭刃"]}, {"q": "幽助の代表的な必殺技は？", "a": "霊丸", "c": ["霊剣", "黒龍波", "修羅旋風拳"]}, {"q": "桑原の代表的な技は？", "a": "霊剣", "c": ["霊丸", "妖狐変化", "邪王炎殺剣"]}, {"q": "蔵馬が武器として使う植物は？", "a": "薔薇", "c": ["桜", "藤", "竹"]}, {"q": "妖狐蔵馬の前世の姿は？", "a": "銀髪の妖狐", "c": ["黒髪の鬼", "白い龍", "金色の鳥"]}, {"q": "飛影の妹は誰？", "a": "雪菜", "c": ["ぼたん", "螢子", "静流"]}, {"q": "雪菜は何族？", "a": "氷女", "c": ["火女", "雪女", "雷女"]}, {"q": "雪菜の涙が変化するものは？", "a": "氷泪石", "c": ["霊石", "妖石", "紅玉"]}, {"q": "幻海の弟子となったのは誰？", "a": "浦飯幽助", "c": ["桑原和真", "飛影", "蔵馬"]}, {"q": "幻海が若返るのはどんな時？", "a": "霊力を高めた時", "c": ["眠っている時", "満月の夜", "怒った時"]}, {"q": "幻海の奥義を継承した人物は？", "a": "浦飯幽助", "c": ["桑原和真", "コエンマ", "蔵馬"]}, {"q": "暗黒武術会を開催した組織は？", "a": "BBC", "c": ["霊界特防隊", "ブラッククラブ", "妖怪連盟"]}, {"q": "暗黒武術会で幽助たちのチーム名は？", "a": "浦飯チーム", "c": ["幻海チーム", "霊界チーム", "人間界チーム"]}, {"q": "暗黒武術会の決勝で戦った相手は？", "a": "戸愚呂チーム", "c": ["六遊怪チーム", "魔性使いチーム", "裏御伽チーム"]}, {"q": "戸愚呂弟の能力は？", "a": "筋肉操作", "c": ["炎操作", "植物操作", "次元操作"]}, {"q": "戸愚呂兄の能力は？", "a": "身体を自在に変形させる", "c": ["筋肉を増大させる", "氷を操る", "相手の技を盗む"]}, {"q": "戸愚呂弟がかつて師事していた人物は？", "a": "幻海", "c": ["雷禅", "仙水", "黄泉"]}, {"q": "左京が望んでいたことは？", "a": "魔界への穴を開けること", "c": ["霊界を支配すること", "不老不死になること", "戸愚呂弟を倒すこと"]}, {"q": "暗黒武術会の実況を担当した人物は？", "a": "小兎", "c": ["樹里", "瑠架", "ぼたん"]}, {"q": "暗黒武術会の審判を担当した人物は？", "a": "樹里", "c": ["小兎", "瑠架", "雪菜"]}, {"q": "六遊怪チームの酎が使う技は？", "a": "錬酔妖気弾", "c": ["爆吐髑触葬", "魔笛霰弾射", "死々若丸"]}, {"q": "六遊怪チームの陣が得意とするものは？", "a": "風", "c": ["水", "土", "雷"]}, {"q": "六遊怪チームの凍矢が得意とするものは？", "a": "氷", "c": ["炎", "風", "毒"]}, {"q": "魔性使いチームの爆拳が得意とする戦法は？", "a": "汗を霧状にして視界を奪う", "c": ["毒霧を吐く", "地面を液状化する", "分身を作る"]}, {"q": "魔性使いチームの陣の特徴は？", "a": "風を操る", "c": ["氷を操る", "影を操る", "毒を操る"]}, {"q": "魔性使いチームの凍矢の武器は？", "a": "氷の剣", "c": ["炎の槍", "風の弓", "雷の鎖"]}, {"q": "裏御伽チームの死々若丸が使う武器は？", "a": "魔哭鳴斬剣", "c": ["降魔の剣", "邪王炎殺剣", "獄錠器"]}, {"q": "裏御伽チームの鈴木の本名は？", "a": "美しい魔闘家鈴木", "c": ["強い妖戦士鈴木", "華麗なる鈴木", "妖怪王鈴木"]}, {"q": "鈴木が幻海に渡した道具の一つは？", "a": "闇の衣", "c": ["氷泪石", "魔界虫", "降魔の剣"]}, {"q": "覆面戦士の正体は？", "a": "幻海", "c": ["ぼたん", "雪菜", "静流"]}, {"q": "鴉が所属するチームは？", "a": "戸愚呂チーム", "c": ["六遊怪チーム", "裏御伽チーム", "魔性使いチーム"]}, {"q": "鴉の能力は？", "a": "爆弾を作り出す", "c": ["毒を作る", "氷を作る", "分身を作る"]}, {"q": "武威が使う武器は？", "a": "巨大な斧", "c": ["大剣", "鎖鎌", "槍"]}, {"q": "武威の本来の戦闘スタイルは？", "a": "闘気による攻撃", "c": ["氷の魔法", "植物操作", "催眠術"]}, {"q": "戸愚呂弟は何パーセントの力で最終決戦に挑んだ？", "a": "100％中の100％", "c": ["80％", "120％", "50％"]}, {"q": "戸愚呂弟が自ら望んだ死後の処罰は？", "a": "最も過酷な冥獄界", "c": ["無罪放免", "人間界への転生", "霊界での奉仕"]}, {"q": "仙水編で登場する元霊界探偵は？", "a": "仙水忍", "c": ["樹", "刃霧要", "神谷実"]}, {"q": "仙水忍が持つ特殊な力は？", "a": "聖光気", "c": ["邪王炎殺気", "霊光波動拳", "妖狐気"]}, {"q": "仙水の人格はいくつ存在する？", "a": "7人", "c": ["3人", "5人", "9人"]}, {"q": "仙水の仲間で次元を操る妖怪は？", "a": "樹", "c": ["御手洗", "天沼", "神谷"]}, {"q": "樹が操る空間は？", "a": "裏男", "c": ["異次元砲", "魔界洞窟", "妖空間"]}, {"q": "能力者編で桑原が目覚めた能力は？", "a": "次元刀", "c": ["黒龍波", "聖光気", "妖気吸収"]}, {"q": "次元刀の特徴は？", "a": "次元や結界を切る", "c": ["魂を斬る", "炎を吸収する", "時間を止める"]}, {"q": "城戸亜沙斗の能力は？", "a": "影を踏んだ相手を動けなくする", "c": ["心を読む", "水を操る", "傷を治す"]}, {"q": "海藤優の能力は？", "a": "禁句を言った相手の魂を抜く", "c": ["嘘をついた相手を眠らせる", "名前を呼んだ相手を操る", "目を見た相手を石化する"]}, {"q": "柳沢光成の能力は？", "a": "触れた相手のコピーになる", "c": ["相手の記憶を消す", "相手を透明にする", "相手の声を奪う"]}, {"q": "室田繁の能力は？", "a": "心の声を聞く", "c": ["未来を見る", "過去を見る", "嘘を見抜く"]}, {"q": "神谷実の職業は？", "a": "医師", "c": ["教師", "刑事", "弁護士"]}, {"q": "神谷実の能力は？", "a": "病気やウイルスを操る", "c": ["植物を操る", "電気を操る", "影を操る"]}, {"q": "刃霧要の能力は？", "a": "物体に妖気を込めて飛ばす", "c": ["時間を止める", "体を液体化する", "他人の姿になる"]}, {"q": "刃霧要が得意とする武器は？", "a": "ダイスやトランプなどの小物", "c": ["日本刀", "鎖鎌", "拳銃"]}, {"q": "御手洗清志の能力は？", "a": "水を操って人を閉じ込める", "c": ["炎を操る", "風を操る", "音を操る"]}, {"q": "天沼月人の能力は？", "a": "ゲームのルールを現実化する", "c": ["夢を現実化する", "漫画を現実化する", "記憶を現実化する"]}, {"q": "巻原定男の能力は？", "a": "他者を食べて能力を奪う", "c": ["他者を触って能力を奪う", "他者の名前を呼んで能力を奪う", "他者を倒して能力を奪う"]}, {"q": "仙水が人間に絶望したきっかけは？", "a": "人間が妖怪を虐待する現場を見たこと", "c": ["霊界に裏切られたこと", "家族を失ったこと", "戸愚呂に敗れたこと"]}, {"q": "仙水が人間界と魔界をつなげようとした理由は？", "a": "魔界の妖怪に人間を裁かせるため", "c": ["魔界を征服するため", "霊界を救うため", "永遠の命を得るため"]}, {"q": "幽助の先祖にあたる魔族は？", "a": "雷禅", "c": ["黄泉", "躯", "煙鬼"]}, {"q": "幽助が覚醒した種族は？", "a": "魔族", "c": ["霊族", "氷女", "妖狐"]}, {"q": "雷禅は魔界で何と呼ばれていた？", "a": "闘神", "c": ["妖帝", "魔王", "雷王"]}, {"q": "雷禅が長年食事を断っていた理由は？", "a": "愛した人間の女性との誓い", "c": ["修行のため", "病気のため", "罰を受けていたため"]}, {"q": "魔界三大勢力の一人ではないのは誰？", "a": "戸愚呂弟", "c": ["雷禅", "黄泉", "躯"]}, {"q": "黄泉の特徴は？", "a": "盲目", "c": ["片腕がない", "声が出ない", "翼がある"]}, {"q": "黄泉がかつて所属していた集団は？", "a": "蔵馬の盗賊団", "c": ["雷禅の軍", "霊界特防隊", "戸愚呂チーム"]}, {"q": "黄泉の息子の名前は？", "a": "修羅", "c": ["北神", "時雨", "煙鬼"]}, {"q": "躯の性別は？", "a": "女性", "c": ["男性", "不明", "無性"]}, {"q": "躯の側近として飛影と戦った人物は？", "a": "時雨", "c": ["北神", "修羅", "煙鬼"]}, {"q": "時雨が使う武器は？", "a": "燐火円礫刀", "c": ["魔哭鳴斬剣", "巨大な斧", "次元刀"]}, {"q": "雷禅の側近は誰？", "a": "北神", "c": ["時雨", "修羅", "鯱"]}, {"q": "魔界統一トーナメントを提案した人物は？", "a": "浦飯幽助", "c": ["黄泉", "躯", "コエンマ"]}, {"q": "魔界統一トーナメントの初代優勝者は？", "a": "煙鬼", "c": ["幽助", "黄泉", "躯"]}, {"q": "煙鬼は誰の旧友？", "a": "雷禅", "c": ["黄泉", "躯", "仙水"]}, {"q": "幽助が魔界で戦った黄泉との試合の結果は？", "a": "幽助の敗北", "c": ["幽助の勝利", "引き分け", "試合中止"]}, {"q": "飛影が魔界で所属した勢力は？", "a": "躯", "c": ["黄泉", "雷禅", "煙鬼"]}, {"q": "蔵馬が魔界で所属した勢力は？", "a": "黄泉", "c": ["躯", "雷禅", "煙鬼"]}, {"q": "桑原が進学のために目指した高校は？", "a": "骸工大付属高校", "c": ["皿屋敷高校", "盟王高校", "魔界高校"]}, {"q": "幽助たちが通っていた中学校は？", "a": "皿屋敷中学校", "c": ["盟王中学校", "骸工中学校", "霊界中学校"]}, {"q": "桑原が雪菜に一目ぼれした場所は？", "a": "垂金邸", "c": ["暗黒武術会会場", "皿屋敷中学校", "魔界"]}, {"q": "垂金権造が雪菜を監禁していた目的は？", "a": "氷泪石を得るため", "c": ["妖力を奪うため", "霊界に売るため", "幻海を呼び出すため"]}, {"q": "垂金邸を守っていた妖怪兄弟は？", "a": "戸愚呂兄弟", "c": ["飛影と蔵馬", "酎と陣", "鴉と武威"]}, {"q": "飛影が盗んだ霊界の秘宝は？", "a": "降魔の剣", "c": ["暗黒鏡", "餓鬼玉", "氷泪石"]}, {"q": "蔵馬が盗んだ霊界の秘宝は？", "a": "暗黒鏡", "c": ["降魔の剣", "餓鬼玉", "魔哭鳴斬剣"]}, {"q": "剛鬼が盗んだ霊界の秘宝は？", "a": "餓鬼玉", "c": ["暗黒鏡", "降魔の剣", "闇の衣"]}, {"q": "暗黒鏡の代償は？", "a": "願いをかなえる代わりに命を奪う", "c": ["記憶を失う", "妖力を失う", "年齢を取る"]}, {"q": "蔵馬が暗黒鏡でかなえようとした願いは？", "a": "母親の病気を治すこと", "c": ["妖狐の姿に戻ること", "飛影を助けること", "霊界へ帰ること"]}, {"q": "剛鬼の主な食料は？", "a": "人間の魂", "c": ["妖怪の血", "霊石", "植物の精気"]}, {"q": "飛影が雪菜に自分が兄だと名乗らない理由は？", "a": "雪菜を悲しませたくないため", "c": ["記憶を失っているため", "コエンマに禁じられているため", "雪菜を嫌っているため"]}, {"q": "飛影が邪眼を移植した医師は？", "a": "時雨", "c": ["神谷", "幻海", "樹"]}, {"q": "飛影が邪眼移植の代償として失ったものは？", "a": "高い妖力", "c": ["記憶", "片腕", "声"]}];
+const QUIZ_LENGTH=10;
+let quiz=[],index=0,score=0,locked=false;
+const $=s=>document.querySelector(s);
+const shuffle=arr=>{
+ const a=[...arr];
+ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+ return a;
+};
+function startQuiz(){
+ quiz=shuffle(QUESTION_POOL).slice(0,QUIZ_LENGTH);
+ index=0;score=0;
+ $("#start").classList.add("hidden");
+ $("#result").classList.add("hidden");
+ $("#quiz").classList.remove("hidden");
+ renderQuestion();
+}
+function renderQuestion(){
+ locked=false;
+ const item=quiz[index];
+ $("#counter").textContent=`第${index+1}問 / ${QUIZ_LENGTH}問`;
+ $("#scoreMini").textContent=`正解 ${score}`;
+ $("#bar").style.width=`${index/QUIZ_LENGTH*100}%`;
+ $("#question").textContent=item.q;
+ $("#feedback").textContent="";
+ $("#feedback").className="feedback";
+ $("#nextBtn").classList.add("hidden");
+ const box=$("#answers");box.innerHTML="";
+ shuffle([item.a,...item.c]).forEach(text=>{
+  const b=document.createElement("button");
+  b.className="choice";b.textContent=text;
+  b.onclick=()=>answer(b,text,item.a);
+  box.appendChild(b);
+ });
+}
+function answer(btn,selected,correct){
+ if(locked)return;
+ locked=true;
+ [...document.querySelectorAll(".choice")].forEach(b=>{
+  b.disabled=true;
+  if(b.textContent===correct)b.classList.add("correct");
+ });
+ if(selected===correct){
+  score++;$("#feedback").textContent="正解！";$("#feedback").classList.add("good");
+ }else{
+  btn.classList.add("wrong");
+  $("#feedback").textContent=`不正解。正解は「${correct}」`;
+  $("#feedback").classList.add("bad");
+ }
+ $("#scoreMini").textContent=`正解 ${score}`;
+ $("#nextBtn").textContent=index===QUIZ_LENGTH-1?"結果を見る":"次の問題へ";
+ $("#nextBtn").classList.remove("hidden");
+}
+function next(){
+ index++;
+ if(index>=QUIZ_LENGTH)showResult();else renderQuestion();
+}
+function showResult(){
+ $("#quiz").classList.add("hidden");
+ $("#result").classList.remove("hidden");
+ $("#finalScore").textContent=`${score} / ${QUIZ_LENGTH}`;
+ let rank,comment;
+ if(score===10){rank="S級妖怪クラス";comment="全問正解。魔界でも通用する知識量です。";}
+ else if(score>=8){rank="A級妖怪クラス";comment="かなり詳しいです。あと少しで完全制覇。";}
+ else if(score>=6){rank="霊界探偵クラス";comment="十分な実力。別の10問にも挑戦してください。";}
+ else if(score>=4){rank="幻海門下生クラス";comment="基礎知識はあります。再挑戦で伸ばせます。";}
+ else{rank="霊界案内人見習い";comment="物語を振り返ってから再挑戦。";}
+ $("#rank").textContent=rank;
+ $("#comment").textContent=comment;
+}
+$("#startBtn").onclick=startQuiz;
+$("#retryBtn").onclick=startQuiz;
+$("#nextBtn").onclick=next;
+</script>
+</body>
+</html>

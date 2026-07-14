@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>忍たま乱太郎 4択クイズ</title>
+<style>
+:root {
+ --bg:#07132a;--panel:#10264a;--panel2:#17345f;--text:#f7fbff;--muted:#b8c9df;
+ --accent:#f2cf45;--accent2:#4dc6eb;--good:#52d790;--bad:#ff7474;--line:#31557f;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+background:radial-gradient(circle at top,#174d73 0,#07132a 50%);color:var(--text)}
+.app{width:min(760px,92vw);margin:0 auto;padding:30px 0 50px}
+.brand{font-size:clamp(24px,4.2vw,36px);font-weight:1000;letter-spacing:.07em;color:var(--accent)}
+.sub{margin-top:6px;color:var(--muted)}
+.card{margin-top:24px;background:rgba(16,38,74,.96);border:1px solid var(--line);border-radius:20px;
+padding:clamp(20px,4vw,34px);box-shadow:0 18px 60px rgba(0,0,0,.36)}
+.center{text-align:center} .hidden{display:none}
+.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}
+.badge{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-weight:800}
+.progress{height:10px;background:#061020;border-radius:999px;overflow:hidden;margin:14px 0 26px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s}
+h1{font-size:clamp(22px,3.6vw,32px);line-height:1.45;margin:0 0 24px}
+.answers{display:grid;gap:12px}
+button{font:inherit}
+.choice{width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:16px 18px;
+border-radius:14px;text-align:left;cursor:pointer;font-weight:800;transition:.18s}
+.choice:hover{transform:translateY(-1px);border-color:#6c96c5}
+.choice.correct{background:rgba(82,215,144,.15);border-color:var(--good)}
+.choice.wrong{background:rgba(255,116,116,.15);border-color:var(--bad)}
+.choice:disabled{cursor:default;transform:none}
+.feedback{min-height:28px;margin-top:18px;font-weight:900}
+.feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+.primary{border:0;background:linear-gradient(90deg,var(--accent),#fff084);color:#102044;border-radius:14px;
+padding:14px 22px;font-weight:1000;cursor:pointer}
+.primary:hover{filter:brightness(1.05)}
+.score{font-size:clamp(48px,10vw,84px);font-weight:1000;color:var(--accent);margin:10px 0}
+.rank{font-size:24px;font-weight:1000;margin-bottom:12px}
+.note{color:var(--muted);line-height:1.7}
+.footer{margin-top:18px;text-align:center;color:#89a2c0;font-size:12px}
+@media(max-width:520px){.app{padding-top:18px}.card{padding:18px;border-radius:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+ <div class="brand">忍たま乱太郎 QUIZ</div>
+ <div class="sub">100問の問題プールから、毎回ランダムで10問出題</div>
+
+ <section id="start" class="card center">
+  <h1>忍術学園の知識を試せ</h1>
+  <p class="note">4択・全10問。問題と選択肢は毎回ランダムです。<br>一年生から上級生、先生、委員会、城の忍者まで出題します。</p>
+  <button class="primary" id="startBtn">クイズ開始</button>
+ </section>
+
+ <section id="quiz" class="card hidden">
+  <div class="topbar">
+   <div class="badge" id="counter">第1問 / 10問</div>
+   <div class="badge" id="scoreMini">正解 0</div>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <h1 id="question"></h1>
+  <div id="answers" class="answers"></div>
+  <div id="feedback" class="feedback"></div>
+  <button class="primary hidden" id="nextBtn">次の問題へ</button>
+ </section>
+
+ <section id="result" class="card center hidden">
+  <div class="note">最終結果</div>
+  <div class="score" id="finalScore">0 / 10</div>
+  <div class="rank" id="rank"></div>
+  <p class="note" id="comment"></p>
+  <button class="primary" id="retryBtn">別の10問に挑戦</button>
+ </section>
+
+ <div class="footer">非公式ファンメイドクイズ。作品画像・音声は使用していません。</div>
+</div>
+
+<script>
+const QUESTION_POOL=[{"q": "『忍たま乱太郎』の主人公は誰？", "a": "猪名寺乱太郎", "c": ["摂津のきり丸", "福富しんべヱ", "土井半助"]}, {"q": "乱太郎は忍術学園の何年生？", "a": "一年生", "c": ["二年生", "三年生", "六年生"]}, {"q": "乱太郎が所属する組は？", "a": "一年は組", "c": ["一年い組", "一年ろ組", "二年は組"]}, {"q": "乱太郎の親友で、お金に非常に細かいのは誰？", "a": "摂津のきり丸", "c": ["福富しんべヱ", "山村喜三太", "皆本金吾"]}, {"q": "乱太郎の親友で、食べることが大好きなのは誰？", "a": "福富しんべヱ", "c": ["摂津のきり丸", "黒木庄左ヱ門", "加藤団蔵"]}, {"q": "乱太郎・きり丸・しんべヱの担任は誰？", "a": "土井半助", "c": ["山田伝蔵", "大川平次渦正", "戸部新左ヱ門"]}, {"q": "一年は組の実技担当教師は誰？", "a": "山田伝蔵", "c": ["土井半助", "戸部新左ヱ門", "斜堂影麿"]}, {"q": "忍術学園の学園長は誰？", "a": "大川平次渦正", "c": ["大川慶次郎", "山田伝蔵", "土井半助"]}, {"q": "忍術学園の事務員は誰？", "a": "小松田秀作", "c": ["食堂のおばちゃん", "山田利吉", "照星"]}, {"q": "忍術学園の食堂を切り盛りしている人物は？", "a": "食堂のおばちゃん", "c": ["稗田八方斎", "山本シナ", "おりん"]}, {"q": "食堂のおばちゃんの決まり文句は？", "a": "お残しは許しまへんでー！", "c": ["忍者は根性や！", "予算を守れ！", "遅刻は許しません！"]}, {"q": "きり丸が休みの間に居候している家は？", "a": "土井先生の家", "c": ["山田先生の家", "学園長の家", "しんべヱの家"]}, {"q": "きり丸が大好きなものは？", "a": "お金", "c": ["花", "昆虫", "絵"]}, {"q": "しんべヱの実家の家業は？", "a": "大貿易商", "c": ["刀鍛冶", "農家", "薬屋"]}, {"q": "しんべヱの妹の名前は？", "a": "カメ子", "c": ["トモミ", "ユキ", "シゲ"]}, {"q": "乱太郎の家は代々何をしている？", "a": "ヒラ忍者", "c": ["城主", "商人", "医者"]}, {"q": "乱太郎の得意なことは？", "a": "速く走ること", "c": ["火薬作り", "変装", "料理"]}, {"q": "乱太郎の特徴として有名なのは？", "a": "ひどい乱視", "c": ["方向音痴", "極端な寒がり", "高所恐怖症"]}, {"q": "しんべヱの特徴的な体質は？", "a": "鼻水がよく出る", "c": ["髪が逆立つ", "耳が遠い", "声が出ない"]}, {"q": "しんべヱの鼻水は時に何として役立つ？", "a": "強力な粘着物", "c": ["火薬", "毒薬", "煙幕"]}, {"q": "一年は組の学級委員長は誰？", "a": "黒木庄左ヱ門", "c": ["二郭伊助", "加藤団蔵", "佐武虎若"]}, {"q": "一年は組で掃除や整理整頓が得意なのは誰？", "a": "二郭伊助", "c": ["夢前三治郎", "笹山兵太夫", "皆本金吾"]}, {"q": "一年は組で実家が馬借なのは誰？", "a": "加藤団蔵", "c": ["佐武虎若", "黒木庄左ヱ門", "山村喜三太"]}, {"q": "一年は組で火縄銃に興味を持つのは誰？", "a": "佐武虎若", "c": ["加藤団蔵", "夢前三治郎", "二郭伊助"]}, {"q": "一年は組で父親が鉄砲の名人なのは誰？", "a": "佐武虎若", "c": ["皆本金吾", "笹山兵太夫", "黒木庄左ヱ門"]}, {"q": "一年は組でからくりが好きなのは誰？", "a": "笹山兵太夫", "c": ["山村喜三太", "加藤団蔵", "夢前三治郎"]}, {"q": "一年は組でナメクジが好きなのは誰？", "a": "山村喜三太", "c": ["笹山兵太夫", "二郭伊助", "皆本金吾"]}, {"q": "一年は組で剣術修行のため入学したのは誰？", "a": "皆本金吾", "c": ["佐武虎若", "黒木庄左ヱ門", "夢前三治郎"]}, {"q": "皆本金吾の剣術の師匠は誰？", "a": "戸部新左ヱ門", "c": ["山田伝蔵", "土井半助", "照星"]}, {"q": "一年は組でマイペースな性格の生徒は？", "a": "夢前三治郎", "c": ["黒木庄左ヱ門", "二郭伊助", "加藤団蔵"]}, {"q": "くの一教室の生徒でリーダー格なのは誰？", "a": "ユキ", "c": ["トモミ", "シゲ", "カメ子"]}, {"q": "くの一教室の生徒で活発な性格なのは誰？", "a": "トモミ", "c": ["ユキ", "シゲ", "山本シナ"]}, {"q": "くの一教室の生徒でしんべヱと親しいのは誰？", "a": "シゲ", "c": ["ユキ", "トモミ", "カメ子"]}, {"q": "くの一教室の担当教師は誰？", "a": "山本シナ", "c": ["山田伝蔵", "土井半助", "斜堂影麿"]}, {"q": "山本シナ先生の特徴は？", "a": "若い姿と老いた姿を使い分ける", "c": ["常に仮面をつける", "巨大な犬を連れている", "火縄銃を使う"]}, {"q": "忍術学園の剣術師範は誰？", "a": "戸部新左ヱ門", "c": ["土井半助", "山田伝蔵", "野村雄三"]}, {"q": "戸部新左ヱ門の弱点は？", "a": "空腹になると力が出ない", "c": ["水が苦手", "暗所が苦手", "猫が苦手"]}, {"q": "山田伝蔵の息子は誰？", "a": "山田利吉", "c": ["土井半助", "小松田秀作", "照星"]}, {"q": "山田利吉の職業は？", "a": "売れっ子忍者", "c": ["忍術学園教師", "城主", "刀鍛冶"]}, {"q": "山田伝蔵が得意とする変装は？", "a": "女装", "c": ["動物への変装", "老人への変装", "子どもへの変装"]}, {"q": "土井半助が苦手なものは？", "a": "練り物", "c": ["豆腐", "魚", "甘い物"]}, {"q": "土井先生が授業で教える科目は？", "a": "教科", "c": ["剣術のみ", "火薬のみ", "馬術のみ"]}, {"q": "忍術学園で保健委員会の委員長を務める六年生は？", "a": "善法寺伊作", "c": ["食満留三郎", "立花仙蔵", "潮江文次郎"]}, {"q": "善法寺伊作の特徴は？", "a": "不運", "c": ["極端な方向音痴", "お金好き", "大食い"]}, {"q": "忍術学園で会計委員会の委員長を務める六年生は？", "a": "潮江文次郎", "c": ["中在家長次", "七松小平太", "善法寺伊作"]}, {"q": "潮江文次郎の口癖として有名なのは？", "a": "ギンギン", "c": ["いけいけどんどん", "予算厳守", "忍者は根性"]}, {"q": "忍術学園で作法委員会の委員長を務める六年生は？", "a": "立花仙蔵", "c": ["潮江文次郎", "食満留三郎", "中在家長次"]}, {"q": "立花仙蔵が得意とするものは？", "a": "火薬", "c": ["馬術", "料理", "医術"]}, {"q": "忍術学園で図書委員会の委員長を務める六年生は？", "a": "中在家長次", "c": ["七松小平太", "立花仙蔵", "善法寺伊作"]}, {"q": "中在家長次の特徴は？", "a": "寡黙で声が小さい", "c": ["非常におしゃべり", "いつも怒っている", "よく泣く"]}, {"q": "忍術学園で体育委員会の委員長を務める六年生は？", "a": "七松小平太", "c": ["食満留三郎", "潮江文次郎", "中在家長次"]}, {"q": "七松小平太の口癖は？", "a": "いけいけどんどん", "c": ["ギンギン", "お残しは許しまへんで", "予算会議だ"]}, {"q": "忍術学園で用具委員会の委員長を務める六年生は？", "a": "食満留三郎", "c": ["善法寺伊作", "立花仙蔵", "七松小平太"]}, {"q": "食満留三郎と何かと張り合う六年生は？", "a": "潮江文次郎", "c": ["善法寺伊作", "中在家長次", "立花仙蔵"]}, {"q": "六年い組の生徒は誰と誰？", "a": "潮江文次郎と立花仙蔵", "c": ["七松小平太と中在家長次", "善法寺伊作と食満留三郎", "久々知兵助と尾浜勘右衛門"]}, {"q": "六年ろ組の生徒は誰と誰？", "a": "七松小平太と中在家長次", "c": ["潮江文次郎と立花仙蔵", "善法寺伊作と食満留三郎", "鉢屋三郎と不破雷蔵"]}, {"q": "六年は組の生徒は誰と誰？", "a": "善法寺伊作と食満留三郎", "c": ["潮江文次郎と立花仙蔵", "七松小平太と中在家長次", "久々知兵助と竹谷八左ヱ門"]}, {"q": "五年い組の生徒の一人は誰？", "a": "久々知兵助", "c": ["立花仙蔵", "七松小平太", "綾部喜八郎"]}, {"q": "久々知兵助の好物として有名なのは？", "a": "豆腐", "c": ["団子", "練り物", "昆布"]}, {"q": "五年い組で久々知兵助と同じ組なのは誰？", "a": "尾浜勘右衛門", "c": ["鉢屋三郎", "不破雷蔵", "竹谷八左ヱ門"]}, {"q": "五年ろ組の生徒は誰と誰？", "a": "鉢屋三郎と不破雷蔵", "c": ["久々知兵助と尾浜勘右衛門", "竹谷八左ヱ門と食満留三郎", "立花仙蔵と潮江文次郎"]}, {"q": "変装の名人として知られる五年生は誰？", "a": "鉢屋三郎", "c": ["不破雷蔵", "久々知兵助", "尾浜勘右衛門"]}, {"q": "優柔不断な性格で知られる五年生は誰？", "a": "不破雷蔵", "c": ["鉢屋三郎", "竹谷八左ヱ門", "久々知兵助"]}, {"q": "五年ろ組の鉢屋三郎がよく変装する相手は？", "a": "不破雷蔵", "c": ["久々知兵助", "竹谷八左ヱ門", "尾浜勘右衛門"]}, {"q": "生物委員会の委員長代理を務める五年生は？", "a": "竹谷八左ヱ門", "c": ["鉢屋三郎", "不破雷蔵", "久々知兵助"]}, {"q": "竹谷八左ヱ門が大切にしている考えは？", "a": "生き物を大切にすること", "c": ["お金を貯めること", "火薬を集めること", "常に変装すること"]}, {"q": "四年い組の生徒は誰？", "a": "平滝夜叉丸", "c": ["綾部喜八郎", "田村三木ヱ門", "浜守一郎"]}, {"q": "平滝夜叉丸が得意とする武器は？", "a": "戦輪", "c": ["火縄銃", "鎖鎌", "吹き矢"]}, {"q": "平滝夜叉丸の性格は？", "a": "自信家で目立ちたがり", "c": ["極端に無口", "お金に細かい", "非常に臆病"]}, {"q": "四年い組で穴掘りが好きなのは誰？", "a": "綾部喜八郎", "c": ["平滝夜叉丸", "田村三木ヱ門", "斉藤タカ丸"]}, {"q": "綾部喜八郎が掘る落とし穴は何と呼ばれる？", "a": "喜八郎の穴", "c": ["忍たま穴", "作法穴", "地獄穴"]}, {"q": "四年ろ組で火器を愛用するのは誰？", "a": "田村三木ヱ門", "c": ["浜守一郎", "斉藤タカ丸", "平滝夜叉丸"]}, {"q": "田村三木ヱ門が愛用する大砲の名前は？", "a": "ユリコ", "c": ["サチコ", "トモコ", "カメコ"]}, {"q": "四年は組で髪結いの家の出身なのは誰？", "a": "斉藤タカ丸", "c": ["浜守一郎", "綾部喜八郎", "平滝夜叉丸"]}, {"q": "斉藤タカ丸が忍術学園へ編入する前の仕事は？", "a": "髪結い", "c": ["火薬師", "馬借", "刀鍛冶"]}, {"q": "四年ろ組の生徒で転入生なのは誰？", "a": "浜守一郎", "c": ["田村三木ヱ門", "平滝夜叉丸", "綾部喜八郎"]}, {"q": "三年ろ組の生徒で方向音痴なのは誰？", "a": "次屋三之助", "c": ["神崎左門", "富松作兵衛", "浦風藤内"]}, {"q": "三年ろ組で次屋三之助と同じく方向音痴なのは誰？", "a": "神崎左門", "c": ["富松作兵衛", "浦風藤内", "三反田数馬"]}, {"q": "方向音痴の仲間を連れ戻すことが多い三年生は？", "a": "富松作兵衛", "c": ["次屋三之助", "神崎左門", "伊賀崎孫兵"]}, {"q": "三年い組で毒虫を飼っているのは誰？", "a": "伊賀崎孫兵", "c": ["三反田数馬", "浦風藤内", "富松作兵衛"]}, {"q": "伊賀崎孫兵が特にかわいがっている毒蛇の名前は？", "a": "ジュンコ", "c": ["ユリコ", "サチコ", "カメ子"]}, {"q": "三年は組で予習を欠かさないのは誰？", "a": "浦風藤内", "c": ["三反田数馬", "伊賀崎孫兵", "次屋三之助"]}, {"q": "三年は組で存在感が薄いことを気にしているのは誰？", "a": "三反田数馬", "c": ["浦風藤内", "富松作兵衛", "神崎左門"]}, {"q": "二年い組で図書委員会に所属するのは誰？", "a": "能勢久作", "c": ["池田三郎次", "川西左近", "時友四郎兵衛"]}, {"q": "二年い組で火薬委員会に所属するのは誰？", "a": "池田三郎次", "c": ["能勢久作", "川西左近", "羽丹羽石人"]}, {"q": "二年ろ組で保健委員会に所属するのは誰？", "a": "川西左近", "c": ["能勢久作", "池田三郎次", "時友四郎兵衛"]}, {"q": "二年は組の生徒の一人は誰？", "a": "時友四郎兵衛", "c": ["潮江文次郎", "久々知兵助", "綾部喜八郎"]}, {"q": "ドクタケ忍者隊の首領は誰？", "a": "稗田八方斎", "c": ["木野小次郎竹高", "雑渡昆奈門", "大木雅之助"]}, {"q": "稗田八方斎の特徴は？", "a": "頭が大きく、後ろに反ると起き上がれない", "c": ["透明になれる", "空を飛べる", "水中でしか活動できない"]}, {"q": "ドクタケ城の城主は誰？", "a": "木野小次郎竹高", "c": ["稗田八方斎", "大川平次渦正", "黄昏甚兵衛"]}, {"q": "ドクタケ忍者隊の忍者の一人は？", "a": "風鬼", "c": ["雑渡昆奈門", "諸泉尊奈門", "山田利吉"]}, {"q": "タソガレドキ忍者隊の組頭は誰？", "a": "雑渡昆奈門", "c": ["稗田八方斎", "山田利吉", "照星"]}, {"q": "雑渡昆奈門の顔に包帯が巻かれている理由は？", "a": "大やけどの傷を隠すため", "c": ["正体を隠すため", "忍術の修行のため", "風邪をひいているため"]}, {"q": "タソガレドキ忍者隊の忍者で土井先生をライバル視するのは誰？", "a": "諸泉尊奈門", "c": ["雑渡昆奈門", "高坂陣内左衛門", "山田利吉"]}, {"q": "忍術学園の火薬委員会顧問は誰？", "a": "土井半助", "c": ["山田伝蔵", "戸部新左ヱ門", "小松田秀作"]}, {"q": "忍術学園の保健委員会顧問は誰？", "a": "新野洋一", "c": ["土井半助", "厚着太逸", "斜堂影麿"]}, {"q": "忍術学園の用具委員会顧問は誰？", "a": "吉野作造", "c": ["野村雄三", "松千代万", "木下鉄丸"]}, {"q": "忍術学園の体育委員会顧問は誰？", "a": "厚着太逸", "c": ["新野洋一", "吉野作造", "野村雄三"]}, {"q": "忍術学園の会計委員会顧問は誰？", "a": "加藤飛蔵", "c": ["土井半助", "斜堂影麿", "松千代万"]}, {"q": "忍術学園の作法委員会顧問は誰？", "a": "斜堂影麿", "c": ["新野洋一", "厚着太逸", "吉野作造"]}];
+const QUIZ_LENGTH=10;
+let quiz=[],index=0,score=0,locked=false;
+const $=s=>document.querySelector(s);
+const shuffle=arr=>{
+ const a=[...arr];
+ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+ return a;
+};
+function startQuiz(){
+ quiz=shuffle(QUESTION_POOL).slice(0,QUIZ_LENGTH);
+ index=0;score=0;
+ $("#start").classList.add("hidden");
+ $("#result").classList.add("hidden");
+ $("#quiz").classList.remove("hidden");
+ renderQuestion();
+}
+function renderQuestion(){
+ locked=false;
+ const item=quiz[index];
+ $("#counter").textContent=`第${index+1}問 / ${QUIZ_LENGTH}問`;
+ $("#scoreMini").textContent=`正解 ${score}`;
+ $("#bar").style.width=`${index/QUIZ_LENGTH*100}%`;
+ $("#question").textContent=item.q;
+ $("#feedback").textContent="";
+ $("#feedback").className="feedback";
+ $("#nextBtn").classList.add("hidden");
+ const box=$("#answers");box.innerHTML="";
+ shuffle([item.a,...item.c]).forEach(text=>{
+  const b=document.createElement("button");
+  b.className="choice";b.textContent=text;
+  b.onclick=()=>answer(b,text,item.a);
+  box.appendChild(b);
+ });
+}
+function answer(btn,selected,correct){
+ if(locked)return;
+ locked=true;
+ [...document.querySelectorAll(".choice")].forEach(b=>{
+  b.disabled=true;
+  if(b.textContent===correct)b.classList.add("correct");
+ });
+ if(selected===correct){
+  score++;$("#feedback").textContent="正解！";$("#feedback").classList.add("good");
+ }else{
+  btn.classList.add("wrong");
+  $("#feedback").textContent=`不正解。正解は「${correct}」`;
+  $("#feedback").classList.add("bad");
+ }
+ $("#scoreMini").textContent=`正解 ${score}`;
+ $("#nextBtn").textContent=index===QUIZ_LENGTH-1?"結果を見る":"次の問題へ";
+ $("#nextBtn").classList.remove("hidden");
+}
+function next(){
+ index++;
+ if(index>=QUIZ_LENGTH)showResult();else renderQuestion();
+}
+function showResult(){
+ $("#quiz").classList.add("hidden");
+ $("#result").classList.remove("hidden");
+ $("#finalScore").textContent=`${score} / ${QUIZ_LENGTH}`;
+ let rank,comment;
+ if(score===10){rank="忍術学園教師クラス";comment="全問正解。学園長も認める知識量です。";}
+ else if(score>=8){rank="六年生クラス";comment="かなり詳しいです。立派な忍者まであと一歩。";}
+ else if(score>=6){rank="上級生クラス";comment="十分な実力。別の10問にも挑戦してください。";}
+ else if(score>=4){rank="一年は組クラス";comment="基礎知識はあります。授業を続けましょう。";}
+ else{rank="忍者のたまご見習い";comment="まずは忍術学園の日常を振り返って再挑戦。";}
+ $("#rank").textContent=rank;
+ $("#comment").textContent=comment;
+}
+$("#startBtn").onclick=startQuiz;
+$("#retryBtn").onclick=startQuiz;
+$("#nextBtn").onclick=next;
+</script>
+</body>
+</html>
